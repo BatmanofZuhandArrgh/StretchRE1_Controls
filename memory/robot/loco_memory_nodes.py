@@ -1,9 +1,10 @@
 """
 Copyright (c) Facebook, Inc. and its affiliates.
 """
-from base_utils import XYZ, Pos
-from memory.memory_nodes import ReferenceObjectNode, MemoryNode, NODELIST, TripleNode
+from droidlet.base_util import XYZ, Pos
+from droidlet.memory.memory_nodes import ReferenceObjectNode, MemoryNode, NODELIST, TripleNode
 import pickle
+
 
 class DetectedObjectNode(ReferenceObjectNode):
     """Encapsulates all methods for dealing with object detections - creating / updating /
@@ -34,7 +35,6 @@ class DetectedObjectNode(ReferenceObjectNode):
     def create(cls, memory, detected_obj) -> str:
         memid = cls.new(memory)
         bounds = detected_obj.get_bounds()
-        # bounds = (0,0,0,0,0,0)
         memory.db_write(
             "INSERT INTO ReferenceObjects \
             (uuid, eid, x, y, z, ref_type) \
@@ -179,4 +179,122 @@ class DetectedObjectNode(ReferenceObjectNode):
         return Pos(x, y, z)
 
 
-NODELIST = NODELIST + [DetectedObjectNode]  # noqa
+class HumanPoseNode(ReferenceObjectNode):
+    """Encapsulates all methods for dealing with human poses - creating / updating /
+    retrieving them etc.
+
+    Args:
+        agent_memory (AgentMemory): reference to the agent's memory
+        memid (string): memory id to create the HumanPose for
+    """
+
+    TABLE = "ReferenceObjects"
+    NODE_TYPE = "HumanPose"
+    TABLE_COLUMNS = ["uuid", "eid", "x", "y", "z", "ref_type"]
+
+    def __init__(self, agent_memory, memid: str):
+        super().__init__(agent_memory, memid)
+        obj_id, x, y, z = self.agent_memory._db_read_one(
+            "SELECT eid, x, y, z FROM ReferenceObjects WHERE uuid=?", memid
+        )
+        self.obj_id = obj_id
+        self.eid = obj_id
+        self.pos = (x, y, z)
+
+    def __repr__(self):
+        return "HumanPose id {}, pos {}".format(self.obj_id, self.pos)
+
+    @classmethod
+    def create(cls, memory, humanpose) -> str:
+        memids = memory._db_read(
+            "SELECT uuid FROM ReferenceObjects WHERE eid=?", str(humanpose.eid)
+        )
+
+        if len(memids) > 0:
+            memory.set_memory_attended_time(memids[0])
+            return memids[0]
+
+        memid = cls.new(memory)
+        memory.db_write(
+            "INSERT INTO ReferenceObjects(uuid, eid, x, y, z, ref_type) VALUES (?, ?, ?, ?, ?, ?)",
+            memid,
+            humanpose.eid,
+            humanpose.xyz[0],
+            humanpose.xyz[1],
+            humanpose.xyz[2],
+            cls.NODE_TYPE,
+        )
+        memory.db_write(
+            "INSERT INTO HumanPoseFeatures(uuid, keypointsBlob) VALUES (?, ?)",
+            memid,
+            pickle.dumps(humanpose.keypoints),
+        )
+        memory.nodes[TripleNode.NODE_TYPE].tag(memory, memid, "_human_pose")
+        return memid
+
+    @classmethod
+    def get_all(cls, memory) -> str:
+        objs = []
+        human_poses = memory._db_read(
+            "SELECT uuid, eid, x, y, z FROM ReferenceObjects WHERE ref_type=?", cls.NODE_TYPE
+        )
+        for x in human_poses:
+            # get feature blob
+            feature_blob = memory._db_read(
+                "SELECT keypointsBlob FROM HumanPoseFeatures WHERE uuid=?", x[0]
+            )
+            feature_repr = pickle.loads(feature_blob[0][0])
+            objs.append({"eid": x[1], "xyz": (x[2], x[3], x[4]), "keypoints": feature_repr})
+        return objs
+
+    def get_pos(self) -> XYZ:
+        x, y, z = self.agent_memory._db_read_one(
+            "SELECT x, y, z FROM ReferenceObjects WHERE uuid=?", self.memid
+        )
+        self.pos = (x, y, z)
+        return self.pos
+
+    # TODO: use a smarter way to get point_at_target
+    def get_point_at_target(self):
+        x, y, z = self.agent_memory._db_read_one(
+            "SELECT x, y, z FROM ReferenceObjects WHERE uuid=?", self.memid
+        )
+        return Pos(x, y, z)
+
+
+class DanceNode(MemoryNode):
+    """Encapsulates all methods for dealing with dances - only creating them for now.
+
+    Args:
+        agent_memory (AgentMemory): reference to the agent's memory
+        memid (string): memory id to retrieve the dance from
+    """
+
+    TABLE_COLUMNS = ["uuid"]
+    TABLE = "Dances"
+    NODE_TYPE = "Dance"
+
+    def __init__(self, agent_memory, memid: str):
+        super().__init__(agent_memory, memid)
+        # TODO put in DB/pickle like tasks?
+        self.dance_fn = self.agent_memory.dances[memid]
+
+    @classmethod
+    def create(cls, memory, dance_fn, name=None, tags=[]) -> str:
+        memid = cls.new(memory)
+        memory.db_write("INSERT INTO Dances(uuid) VALUES (?)", memid)
+        # TODO put in db via pickle like tasks?
+        memory.dances[memid] = dance_fn
+        if name is not None:
+            memory.nodes[TripleNode.NODE_TYPE].create(
+                memory, subj=memid, pred_text="has_name", obj_text=name
+            )
+        if len(tags) > 0:
+            for tag in tags:
+                memory.nodes[TripleNode.NODE_TYPE].create(
+                    memory, subj=memid, pred_text="has_tag", obj_text=tag
+                )
+        return memid
+
+
+NODELIST = NODELIST + [DetectedObjectNode, HumanPoseNode, DanceNode]  # noqa

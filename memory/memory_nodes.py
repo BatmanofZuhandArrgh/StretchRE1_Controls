@@ -4,7 +4,7 @@ Copyright (c) Facebook, Inc. and its affiliates.
 import uuid
 import json
 from typing import Optional, List, Dict, cast, Tuple
-from base_utils import XYZ, POINT_AT_TARGET, to_player_struct
+from droidlet.base_util import XYZ, POINT_AT_TARGET, to_player_struct
 
 
 class MemoryNode:
@@ -524,7 +524,48 @@ class TripleNode(MemoryNode):
         if triple_memids:
             agent_memory.forget(triple_memids[0][0])
 
-#DELETED class InterpreterNode
+
+class InterpreterNode(MemoryNode):
+    """for representing interpreter objects"""
+
+    TABLE_COLUMNS = ["uuid"]
+    TABLE = "InterpreterMems"
+    NODE_TYPE = "Interpreter"
+
+    def __init__(self, agent_memory, memid: str):
+        super().__init__(agent_memory, memid)
+        finished, awaiting_response, interpreter_type = agent_memory._db_read_one(
+            "SELECT finished, awaiting_response, interpreter_type FROM InterpreterMems where uuid=?",
+            memid,
+        )
+        self.finished = finished
+        self.awaiting_response = awaiting_response
+        self.interpreter_type = interpreter_type
+
+    @classmethod
+    def create(
+        cls,
+        memory,
+        interpreter_type="interpeter",
+        finished=False,
+        awaiting_response=False,
+        snapshot=False,
+    ) -> str:
+        memid = cls.new(memory, snapshot=snapshot)
+        memory.db_write(
+            "INSERT INTO InterpreterMems(uuid, finished, awaiting_response, interpreter_type) VALUES (?,?,?,?)",
+            memid,
+            finished,
+            awaiting_response,
+            interpreter_type,
+        )
+        return memid
+
+    def finish(self):
+        self.agent_memory.db_write(
+            "UPDATE InterpreterMems SET finished=? WHERE uuid=?", 1, self.memid
+        )
+
 
 # the table entry just has the memid and a modification time,
 # actual set elements are handled as triples
@@ -1320,6 +1361,7 @@ NODELIST = [
     LocationNode,
     AttentionNode,
     TripleNode,
+    InterpreterNode,
     SetNode,
     TimeNode,
     PlayerNode,

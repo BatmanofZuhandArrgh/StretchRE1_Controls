@@ -1,8 +1,3 @@
-import os
-import sqlite3
-
-SCHEMAS = [os.path.join(os.path.dirname(__file__), "base_memory_schema.sql")]
-
 """
 Copyright (c) Facebook, Inc. and its affiliates.
 """
@@ -18,14 +13,14 @@ import uuid
 import datetime
 from itertools import zip_longest
 from typing import cast, Optional, List, Tuple, Sequence, Union
-from base_utils import XYZ
-from shared_data_structs import Time
-# from droidlet.memory.memory_filters import MemorySearcher
-# from droidlet.event import dispatch
-from memory.memory_util import parse_sql, format_query
-# from droidlet.memory.place_field import PlaceField, EmptyPlaceField
+from droidlet.base_util import XYZ
+from droidlet.shared_data_structs import Time
+from droidlet.memory.memory_filters import MemorySearcher
+from droidlet.event import dispatch
+from droidlet.memory.memory_util import parse_sql, format_query
+from droidlet.memory.place_field import PlaceField, EmptyPlaceField
 
-from memory.memory_nodes import (  # noqa
+from droidlet.memory.memory_nodes import (  # noqa
     TaskNode,
     TripleNode,
     SelfNode,
@@ -132,12 +127,11 @@ class AgentMemory:
 
         self.make_self_mem()
 
-        #TODO Fixme
-        # self.searcher = MemorySearcher()
-        # if place_field_pixels_per_unit > 0:
-        #     self.place_field = PlaceField(self, pixels_per_unit=place_field_pixels_per_unit)
-        # else:
-        #     self.place_field = EmptyPlaceField()
+        self.searcher = MemorySearcher()
+        if place_field_pixels_per_unit > 0:
+            self.place_field = PlaceField(self, pixels_per_unit=place_field_pixels_per_unit)
+        else:
+            self.place_field = EmptyPlaceField()
 
     def __del__(self):
         """Close the database file"""
@@ -690,7 +684,7 @@ class AgentMemory:
             "arguments": query_dict,
             "result": r,
         }
-        # dispatch.send("memory", data=hook_data)
+        dispatch.send("memory", data=hook_data)
         return r
 
     def _db_write(self, query: str, *args) -> int:
@@ -816,4 +810,3 @@ class AgentMemory:
         obj = pickle.loads(bs)
         self.reinstate_attrs(obj)
         return obj
-
