@@ -3,7 +3,7 @@ Copyright (c) Facebook, Inc. and its affiliates.
 """
 import numpy as np
 
-from droidlet.memory.memory_nodes import TripleNode
+from memory_nodes import TripleNode
 from .memory_filters import get_property_value, Attribute
 
 

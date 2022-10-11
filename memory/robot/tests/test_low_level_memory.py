@@ -2,10 +2,10 @@
 Copyright (c) Facebook, Inc. and its affiliates.
 """
 import unittest
-from droidlet.memory.memory_nodes import PlayerNode, TripleNode
-from droidlet.memory.robot.loco_memory import LocoAgentMemory
-from droidlet.memory.robot.loco_memory_nodes import DanceNode, DetectedObjectNode
-from droidlet.base_util import Pos, Look, Player
+from memory_nodes import PlayerNode, TripleNode
+from robot.loco_memory import LocoAgentMemory
+from robot.loco_memory_nodes import DanceNode, DetectedObjectNode
+from droidlet_utils.base_utils import Pos, Look, Player
 
 
 class DO:

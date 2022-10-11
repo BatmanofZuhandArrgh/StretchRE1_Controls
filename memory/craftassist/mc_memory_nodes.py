@@ -7,9 +7,9 @@ import numpy as np
 import logging
 from collections import Counter
 from typing import cast, List, Sequence, Dict
-from droidlet.base_util import XYZ, POINT_AT_TARGET, IDM, Block, Look, npy_to_blocks_list
-from droidlet.shared_data_struct.craftassist_shared_utils import MOBS_BY_ID
-from droidlet.memory.memory_nodes import (
+from droidlet_utils.base_utils import XYZ, POINT_AT_TARGET, IDM, Block, Look, npy_to_blocks_list
+from droidlet_utils.shared_data_struct.craftassist_shared_utils import MOBS_BY_ID
+from memory_nodes import (
     TripleNode,
     link_archive_to_mem,
     ReferenceObjectNode,

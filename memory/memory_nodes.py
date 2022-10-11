@@ -4,8 +4,7 @@ Copyright (c) Facebook, Inc. and its affiliates.
 import uuid
 import json
 from typing import Optional, List, Dict, cast, Tuple
-from droidlet.base_util import XYZ, POINT_AT_TARGET, to_player_struct
-
+from droidlet_utils.base_utils import XYZ, POINT_AT_TARGET, to_player_struct
 
 class MemoryNode:
     """This is the main class representing a node in the memory

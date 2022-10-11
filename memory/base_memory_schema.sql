@@ -55,10 +55,32 @@ CREATE TABLE ReferenceObjects (
 );
 CREATE INDEX RefObjXYZ ON ReferenceObjects(x, y, z);
 
+-- CREATE TRIGGER RefObjUpdate AFTER UPDATE ON ReferenceObjects
+--     BEGIN INSERT INTO Updates(uuid, update_type) VALUES (OLD.uuid, 'update');
+-- END;
+
+CREATE TABLE BCIDetectedObjects (
+    uuid        NCHAR(36)       PRIMARY KEY,
+    eid         INTEGER,
+    img_x       FLOAT,
+    img_y       FLOAT,
+    cam_x       FLOAT,
+    cam_y       FLOAT,
+    depth       FLOAT,
+    base_x      FLOAT,
+    base_y      FLOAT,
+    base_z      FLOAT,
+    ref_type    VARCHAR(255),  -- what kind of ref object is this?
+
+    UNIQUE(eid),
+    UNIQUE(uuid),
+    FOREIGN KEY(uuid) REFERENCES Memories(uuid) ON DELETE CASCADE
+);
+-- CREATE INDEX RefObjXYZ ON ReferenceObjects(x, y, z);
+
 CREATE TRIGGER RefObjUpdate AFTER UPDATE ON ReferenceObjects
     BEGIN INSERT INTO Updates(uuid, update_type) VALUES (OLD.uuid, 'update');
 END;
-
 
 CREATE TABLE ArchivedReferenceObjects (
     uuid        NCHAR(36)       PRIMARY KEY,

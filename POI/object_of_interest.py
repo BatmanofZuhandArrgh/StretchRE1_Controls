@@ -1,12 +1,12 @@
-from point_of_interest import POI
+from POI.point_of_interest import POI
 
 class OOI(POI):
     def __init__(
         self, img_coord, depth,
         obj_class, obj_atributes, 
         bbox, conf_score,
-        uuid = None) -> None:
-        super().__init__(img_coord, depth, uuid)
+        eid = None) -> None:
+        super().__init__(img_coord, depth, eid)
         '''
         obj_cls: str, class of object detected
         obj_atrs: list of str, atributes of objects, like "green", "tall",...
@@ -17,3 +17,6 @@ class OOI(POI):
         self.obj_atrs= obj_atributes
         self.bbox = bbox
         self.conf = conf_score
+
+    def get_OOI_attrs(self):
+        return self.obj_cls, self.obj_atrs, self.bbox, self.conf

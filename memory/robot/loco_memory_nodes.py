@@ -1,10 +1,174 @@
 """
 Copyright (c) Facebook, Inc. and its affiliates.
 """
-from droidlet.base_util import XYZ, Pos
-from droidlet.memory.memory_nodes import ReferenceObjectNode, MemoryNode, NODELIST, TripleNode
+import numpy as np
+from droidlet_utils.base_utils import XYZ, Pos
+from memory_nodes import ReferenceObjectNode, MemoryNode, NODELIST, TripleNode
+import sys
+sys.path.append(".")
+from POI.point_of_interest import POI
+from POI.object_of_interest import OOI
 import pickle
 
+class BCIDetectedObjectNode(MemoryNode):
+    """Encapsulates all methods for dealing with object detections - creating / updating /
+    retrieving them etc.
+
+    Args:
+        agent_memory (AgentMemory): reference to the agent's memory
+        memid (string): memory id to create the DetectedObject for
+    """
+    TABLE = "BCIDetectedObjects"
+    OBJ_TABLE = 'BCIDetectedObjectFeatures'
+    NODE_TYPE = "BCIDetectedObject"
+    TABLE_COLUMNS = ["uuid", "eid", 'img_x', 'img_y', 'cam_x', 'cam_y', 'depth', 'base_x', 'base_y', 'base_z']
+
+    def __init__(self, agent_memory, memid: str):        #not tested
+        super().__init__(agent_memory, memid)
+        obj_id, img_x, img_y, cam_x, cam_y, depth, base_x, base_y, base_z = self.agent_memory._db_read_one(
+            f"SELECT eid, img_x, img_y, cam_x, cam_y, depth, base_x, base_y, base_z FROM {self.TABLE} WHERE uuid=?", memid
+        )
+        
+        self.obj_id= obj_id
+        self.eid = obj_id
+        self.img_coord = (img_x, img_y)
+        self.cam_coord = (cam_x, cam_y, depth)
+        self.base_coord = (base_x, base_y, base_z)
+
+    def __repr__(self) -> str:
+        return "DetectedObject id {}, pos {}".format(self.obj_id, self.base_coord)
+
+    @classmethod
+    def create(cls, memory, detected_obj) -> str:
+        memid = cls.new(memory)
+        eid = detected_obj.eid
+
+        img_coord = detected_obj.img_coord[:-1]
+        cam_coord = detected_obj.cam_coord
+        base_coord= detected_obj.base_coord
+        print(eid)
+
+        memory.db_write(
+            f"INSERT INTO {cls.TABLE}  \
+            (uuid, eid, img_x, img_y, cam_x, cam_y, depth, base_x, base_y, base_z, ref_type) \
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            memid,
+            eid,
+            img_coord[0],
+            img_coord[1],
+            cam_coord[0],
+            cam_coord[1],
+            cam_coord[2],
+            base_coord[0],
+            base_coord[1],
+            base_coord[2],
+            cls.NODE_TYPE,
+        )
+
+        obj_cls, obj_atrs, bbox, conf = detected_obj.get_OOI_attrs()
+
+        memory.db_write(
+            f"INSERT INTO {cls.OBJ_TABLE}(uuid, obj_cls, obj_atrs, bbox_x_min, bbox_y_min, bbox_x_max, bbox_y_max, conf) \
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            memid,
+            obj_cls,
+            obj_atrs,
+            bbox[0][0],
+            bbox[0][1],
+            bbox[1][0],
+            bbox[1][1],
+            conf, 
+        )
+
+        # cls.safe_tag(detected_obj, memory, memid, "has_name", "label")
+        # cls.safe_tag(detected_obj, memory, memid, "has_colour", "color")
+        # if hasattr(detected_obj, "properties") and detected_obj.properties is not None:
+        #     cls.safe_tag(detected_obj, memory, memid, "has_properties", "properties")
+        #     for prop in detected_obj.properties:
+        #         memory.nodes[TripleNode.NODE_TYPE].tag(memory, memid, prop)
+
+        # # Tag everything with has_tag predicate
+        # if hasattr(detected_obj, "color") and detected_obj.color is not None:
+        #     memory.nodes[TripleNode.NODE_TYPE].tag(memory, memid, detected_obj.color)
+        # if hasattr(detected_obj, "label") and detected_obj.label is not None:
+        #     memory.nodes[TripleNode.NODE_TYPE].tag(memory, memid, detected_obj.label)
+        # memory.nodes[TripleNode.NODE_TYPE].tag(memory, memid, "_physical_object")
+        # memory.nodes[TripleNode.NODE_TYPE].tag(memory, memid, "_not_location")
+        return memid
+
+    @classmethod
+    def update(cls, memory, detected_obj) -> str:
+        memids = memory._db_read(
+            f"SELECT uuid FROM {cls.TABLE} WHERE eid=?", str(detected_obj.eid)
+        )
+
+        memid = memids[0][0]
+        memory.set_memory_attended_time(memid)
+
+        img_coord = detected_obj.img_coord[:-1]
+        cam_coord = detected_obj.cam_coord
+        base_coord= detected_obj.base_coord
+
+        memory.db_write(
+            f"UPDATE {cls.OBJ_TABLE} SET img_x = ?, img_y = ?, cam_x = ?, cam_y = ?, depth = ?, base_x = ?, base_y = ?, base_z = ?, WHERE uuid=?",
+            img_coord[0],
+            img_coord[1],
+            cam_coord[0],
+            cam_coord[1],
+            cam_coord[2],
+            base_coord[0],
+            base_coord[1],
+            base_coord[2],
+            memid,
+        )
+
+        # TODO: should we update mask, bbox and bounds too?
+        # memory.db_write(
+        #     "UPDATE DetectedObjectFeatures SET  obj_cls=?, obj_atrs=? where uuid=?",
+
+        #     memid,
+        # )
+        return memid
+
+    @classmethod
+    def get_all(cls, memory) -> list:
+        objs = []
+
+        eids = memory._db_read(
+            f"SELECT eid FROM {cls.TABLE} WHERE ref_type=?", cls.NODE_TYPE
+        )
+        for eid in eids:
+        
+            obj = cls.get_obj_by_eid(memory, eid[0])
+            objs.append(obj)
+
+        return objs
+
+    @classmethod
+    def get_obj_by_eid(cls, memory, eid) -> list:
+        detected_pt_attr = memory._db_read(
+            f"SELECT uuid, eid, img_x, img_y, cam_x, cam_y, depth, base_x, base_y, base_z FROM {cls.TABLE} WHERE eid=?", eid
+        )[0]
+        #_db_read about a list of tuple of values
+        # print(detected_pt_attr)
+
+        uuid = detected_pt_attr[0]
+        
+        detected_obj_attr =  memory._db_read(
+            f"SELECT obj_cls, obj_atrs, bbox_x_min, bbox_y_min, bbox_x_max, bbox_y_max, conf FROM {cls.OBJ_TABLE} WHERE uuid=?", uuid
+        )[0]
+        # print(detected_obj_attr)
+
+        detected_obj = OOI(
+            img_coord = np.array([detected_pt_attr[2], detected_pt_attr[3]]), 
+            depth = detected_pt_attr[6],
+            obj_class = detected_obj_attr[0], 
+            obj_atributes = detected_obj_attr[1], 
+            bbox = ((detected_obj_attr[2], detected_obj_attr[3]), (detected_obj_attr[4], detected_obj_attr[5])),
+            conf_score = detected_obj_attr[6],
+            eid = eid,
+        )
+        return detected_obj
 
 class DetectedObjectNode(ReferenceObjectNode):
     """Encapsulates all methods for dealing with object detections - creating / updating /
@@ -297,4 +461,4 @@ class DanceNode(MemoryNode):
         return memid
 
 
-NODELIST = NODELIST + [DetectedObjectNode, HumanPoseNode, DanceNode]  # noqa
+NODELIST = NODELIST + [DetectedObjectNode, HumanPoseNode, DanceNode, BCIDetectedObjectNode]  # noqa

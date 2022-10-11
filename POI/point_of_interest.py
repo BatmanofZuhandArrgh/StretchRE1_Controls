@@ -2,7 +2,7 @@ import numpy as np
 
 class POI():
     #Point of Interest
-    def __init__(self, img_coord, depth, uuid = None) -> None:
+    def __init__(self, img_coord, depth, eid = None) -> None:
         '''
         These are the np.array of coordinates of (the center of) the POI
         img_coord = [w, h, 1]. Origin #TODO define
@@ -13,10 +13,10 @@ class POI():
         self.img_coord = np.concatenate((img_coord, np.array([1])), axis=0) 
         self.depth = depth
     
-        self.cam_coord = None
-        self.base_coord = None
+        self.cam_coord = [0,0,0]
+        self.base_coord = [0,0,0]
 
-        self.uuid = uuid
+        self.eid = eid 
 
     def set_cam_coord(self, inv_cam_intrinsic_mat):
         '''
@@ -30,5 +30,43 @@ class POI():
         '''
         self.world_coord = inv_cam_extrinsic_mat.dot(self.cam_coord)
 
-    
+#Original Object class to implement along with memory  
+# class WorldObject:
+#     def __init__(self, label, center, rgb_depth, mask=None, xyz=None):
+#         self.label = label
+#         self.center = center
+#         self.rgb_depth = rgb_depth
+        
+#         self.xyz = xyz #if xyz else rgb_depth.get_coords_for_point(self.center)
+#         """get_coords_for_point: fetches xyz from the point cloud in pyrobot coordinates and converts it to
+#         canonical world coordinates. Not available, in our current WIP
+#         """
+        
+#         self.eid = None
+#         self.feature_repr = None
+        
+#         self.mask = mask
+#         self.bounds = rgb_depth.get_bounds_for_mask(self.mask)
+#         """for all points in the mask, returns the bounds as an axis-aligned bounding box."""
+
+#     def get_xyz(self):
+#         """returns xyz in canonical world coordinates."""
+#         return {"x": self.xyz[0], "y": self.xyz[1], "z": self.xyz[2]}
+
+#     def get_bounds(self):
+#         """returns bounding box as dict."""
+#         return (
+#             self.bounds[0],
+#             self.bounds[1],
+#             self.bounds[2],
+#             self.bounds[3],
+#             self.bounds[4],
+#             self.bounds[5],
+#         )
+
+#     def get_masked_img(self):
+#         raise NotImplementedError
+
+#     def to_struct(self):
+#         raise NotImplementedError
 

@@ -13,14 +13,15 @@ import uuid
 import datetime
 from itertools import zip_longest
 from typing import cast, Optional, List, Tuple, Sequence, Union
-from droidlet.base_util import XYZ
-from droidlet.shared_data_structs import Time
-from droidlet.memory.memory_filters import MemorySearcher
-from droidlet.event import dispatch
-from droidlet.memory.memory_util import parse_sql, format_query
-from droidlet.memory.place_field import PlaceField, EmptyPlaceField
+from droidlet_utils.base_utils import XYZ
+from droidlet_utils.shared_data_structs import Time
+from droidlet_utils.event import dispatch
+from memory_util import parse_sql, format_query
+from place_field import PlaceField, EmptyPlaceField
 
-from droidlet.memory.memory_nodes import (  # noqa
+from memory_filters import MemorySearcher
+
+from memory_nodes import (  # noqa
     TaskNode,
     TripleNode,
     SelfNode,

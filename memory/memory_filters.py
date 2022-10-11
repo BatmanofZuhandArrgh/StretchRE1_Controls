@@ -3,8 +3,8 @@ Copyright (c) Facebook, Inc. and its affiliates.
 """
 from typing import List
 import torch
-from droidlet.memory.filters_conversions import get_inequality_symbol, sqly_to_new_filters
-from droidlet.memory.memory_nodes import TripleNode
+from filters_conversions import get_inequality_symbol, sqly_to_new_filters
+from memory_nodes import TripleNode
 
 ####################################################################################
 ### This file is split between the basic memory searcher, and memory filters objects
