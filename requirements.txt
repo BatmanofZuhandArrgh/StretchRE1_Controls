@@ -1,0 +1,6 @@
+opencv-python
+matplotlib
+numpy
+pyrealsense2
+hello-robot-stretch-body
+hello-robot-stretch-body-tools

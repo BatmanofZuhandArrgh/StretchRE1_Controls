@@ -15,3 +15,13 @@ Please see yolov7.RE1_README.md to install and use
 
 # RE1
 Please see sample_demo.ipynb for for details on how to use
+
+# Installation:
+'''
+git clone https://github.com/BatmanofZuhandArrgh/RE1.git
+cd RE1
+pip install -r requirements.txt
+
+git submodule update --init
+pip install -r yolov7/requirements.txt
+'''
