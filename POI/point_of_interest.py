@@ -13,7 +13,7 @@ class POI():
         self.img_coord = np.concatenate((img_coord, np.array([1])), axis=0) 
         self.depth = depth
     
-        self.cam_coord = [0,0,0]
+        self.cam_coord = [0,0,0] 
         self.base_coord = [0,0,0]
 
         self.eid = eid 
