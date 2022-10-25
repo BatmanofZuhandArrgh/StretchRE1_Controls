@@ -4,3 +4,4 @@ numpy
 pyrealsense2
 hello-robot-stretch-body
 hello-robot-stretch-body-tools
+pyYAML

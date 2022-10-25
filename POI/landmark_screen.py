@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
-from location_of_interest import LOI
+from POI.location_of_interest import LOI
+from POI.object_of_interest import OOI
+from re1_utils.objdet_utils import plot_all_boxes
 
 class LandmarkScreen():
     def __init__(self, color_frame, depth_frame) -> None:
@@ -42,18 +44,31 @@ class LandmarkScreen():
                     bbox = bbox,
                     active=self.grid_repr[w][h],
                 )
+        self.cur_preds = None #Current object detected
 
-    def show(self):
+        self.landmarks = {}
+        
+        self.landmarks['locations'] = self.grid
+        self.landmarks['objects'] = {} 
+
+    def show_locations(self):
         for w in range(self.grid_repr.shape[0]):
             for h in range(self.grid_repr.shape[1]):
-                cv2.rectangle(self.color_frame, self.grid[w][h].bbox[0], self.grid[w][h].bbox[1], self.grid[w][h].landmark_color, 2)
                 if self.grid[w][h].active_landmark:
                     # cv2.circle(self.color_frame, self.grid[w][h].img_coord[:-1], radius= 2, color = (255,0,0), thickness = 2)
+                    cv2.rectangle(self.color_frame, self.grid[w][h].bbox[0], self.grid[w][h].bbox[1], self.grid[w][h].landmark_color, 1)
                     self.color_frame = cv2.putText(self.color_frame, str(self.grid[w][h].depth), self.grid[w][h].img_coord[:-1], cv2.FONT_HERSHEY_SIMPLEX, 
                                     0.5, (255,0,0), 1, cv2.LINE_AA)
 
+    def show_objects(self):
+        if self.cur_preds is not None:
+            plot_all_boxes(self.cur_preds, self.color_frame)
+    
+    def show(self):
+        self.show_locations()
+        self.show_objects()
+
         self.color_frame = cv2.cvtColor(self.color_frame, cv2.COLOR_RGB2BGR)
-        print('save')
         cv2.imwrite('./sample/selection_output.png', self.color_frame)
 
         cv2.imshow('',self.color_frame)
@@ -62,6 +77,20 @@ class LandmarkScreen():
             #closing all open windows 
             cv2.destroyAllWindows() 
 
+    def update_OOI(self, preds):
+        self.cur_preds = preds
+        for i in range(preds.shape[0]):
+            coord = preds[i, :]
+            img_coord = np.array([(coord[2]-coord[0])/2,(coord[3]-coord[1])/2])
+            self.landmarks['objects'][i] = OOI(
+                img_coord = img_coord, 
+                depth = 0,
+                obj_class = int(coord[-1]),
+                obj_atributes = 'None', 
+                bbox = ((coord[0],coord[1]),(coord[2],coord[3])),
+                conf_score = coord[4],
+                eid = i
+            )
 
 if __name__ == '__main__':
     sample_img = cv2.imread('./sample/color_output.png')
@@ -69,3 +98,14 @@ if __name__ == '__main__':
     sample_img = cv2.resize(sample_img, (480, 640))
     landmark_screen = LandmarkScreen(color_frame=sample_img, depth_frame=sample_img[:,:, 0])
     landmark_screen.show()
+
+    preds = np.array(
+        [
+        [375, 470, 426,614,0.81986,39],
+        [322, 467, 379,632,0.78286,39],
+        [286, 280, 315,353,0.40197,39]
+        ]
+    )
+    landmark_screen.update_OOI(preds)
+    landmark_screen.show()
+

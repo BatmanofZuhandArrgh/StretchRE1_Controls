@@ -1,4 +1,4 @@
-from point_of_interest import POI
+from POI.point_of_interest import POI
 
 class LOI(POI):
     def __init__(self, img_coord, depth, bbox, active = False, uuid=None) -> None:
