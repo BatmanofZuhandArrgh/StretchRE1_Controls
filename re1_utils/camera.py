@@ -25,6 +25,8 @@ def get_rs_intrinsic_mat():
     intrinsic_mat = np.array([intr.fx, 0, intr.ppx, 0, intr.fy, intr.ppy, 0,0,1]).reshape((3,3))
     return intrinsic_mat, intrinsic_mat_dict
 
+def get_rs_extrinsic_mat():
+
 def get_cur_rs_frame(width = 480, height = 640):
     '''
     Get 1 image frame from realsense camera

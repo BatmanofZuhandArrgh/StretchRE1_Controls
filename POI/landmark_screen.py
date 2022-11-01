@@ -13,6 +13,7 @@ class LandmarkScreen():
 
         #Assuming the height and width is dividable by 10
         self.grid_unit_h, self.grid_unit_w = int(self.height //10), int(self.width //10)
+        #Grid representation for initation of grid, 10x10
         self.grid_repr = np.array([
             [0,0,0,0,0,0,0,0,0,0],
             [0,0,0,0,0,0,0,0,0,0],
@@ -35,8 +36,10 @@ class LandmarkScreen():
 
                 # print(w, h, self.grid_repr[w][h], img_coord, self.depth_frame.shape)
                 # print(self.depth_frame[img_coord[1]][img_coord[0]])
-                depth_grid_unit = self.depth_frame[bbox[0][0]: bbox[1][0], bbox[0][1]: bbox[1][1]]
+                depth_grid_unit = self.depth_frame[bbox[0][1]: bbox[1][1], bbox[0][0]: bbox[1][0]] #index by h, w
+                
                 depth = np.median(depth_grid_unit)
+                print(depth_grid_unit, depth, bbox)
                 
                 self.grid[w][h] = LOI(
                     img_coord=img_coord,
@@ -91,6 +94,15 @@ class LandmarkScreen():
                 conf_score = coord[4],
                 eid = i
             )
+
+    def convert_base_coordinates(self, inv_cam_intrinsic_mat, inv_cam_extrinsic_mat):
+        for landmark_type in self.landmarks.keys():
+            for index in self.landmarks[landmark_type].keys():
+                self.landmarks[landmark_type][index].set_cam_coord(inv_cam_intrinsic_mat)
+                self.landmarks[landmark_type][index].set_world_coord(inv_cam_extrinsic_mat)
+    
+    def get_landmarks(self):
+        return self.landmarks
 
 if __name__ == '__main__':
     sample_img = cv2.imread('./sample/color_output.png')
