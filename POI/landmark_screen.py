@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from pprint import pprint
 from POI.location_of_interest import LOI
 from POI.object_of_interest import OOI
 from re1_utils.objdet_utils import plot_all_boxes
@@ -8,7 +9,7 @@ from re1_utils.objdet_utils import plot_all_boxes
 class LandmarkScreen():
     def __init__(self, color_frame, depth_frame) -> None:
         self.height, self.width, _ = color_frame.shape
-        self.depth_frame = cv2.medianBlur(depth_frame,5)
+        self.depth_frame = cv2.medianBlur(np.float32(depth_frame),5)
         self.color_frame = color_frame
 
         #Assuming the height and width is dividable by 10
@@ -26,7 +27,7 @@ class LandmarkScreen():
             [0,0,1,0,0,1,0,0,1,0],
             [0,0,0,0,0,0,0,0,0,0]
         ])
-        print(self.depth_frame)
+
         self.grid = {}
         for w in range(self.grid_repr.shape[0]):
             self.grid[w] = {}
@@ -100,12 +101,24 @@ class LandmarkScreen():
                 eid = i
             )
 
-    def convert_base_coordinates(self, inv_cam_intrinsic_mat, inv_cam_extrinsic_mat):
-        for landmark_type in self.landmarks.keys():
-            for index in self.landmarks[landmark_type].keys():
-                self.landmarks[landmark_type][index].set_cam_coord(inv_cam_intrinsic_mat)
-                self.landmarks[landmark_type][index].set_world_coord(inv_cam_extrinsic_mat)
+    def update_base_coords(self, inv_cam_intrinsic_mat, inv_cam_extrinsic_mat):
+        for index in self.landmarks['objects'].keys():
+            self.landmarks['objects'][index].set_cam_coord(inv_cam_intrinsic_mat)
+            self.landmarks['objects'][index].set_world_coord(inv_cam_extrinsic_mat)
     
+        for w in range(self.grid_repr.shape[0]):
+            for h in range(self.grid_repr.shape[1]):
+                self.landmarks['locations'][w][h].set_cam_coord(inv_cam_intrinsic_mat)
+                self.landmarks['locations'][w][h].set_world_coord(inv_cam_extrinsic_mat)
+
+    def update_cam_coords(self, inv_cam_intrinsic_mat):
+        for index in self.landmarks['objects'].keys():
+            self.landmarks['objects'][index].set_cam_coord(inv_cam_intrinsic_mat)     
+
+        for w in range(self.grid_repr.shape[0]):
+            for h in range(self.grid_repr.shape[1]):
+                self.landmarks['locations'][w][h].set_cam_coord(inv_cam_intrinsic_mat)
+
     def get_landmarks(self):
         return self.landmarks
     

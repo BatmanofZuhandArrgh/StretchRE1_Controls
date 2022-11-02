@@ -64,7 +64,7 @@ def get_cur_rs_frame(width = 480, height = 640):
         new_depth.append(cur_depth)    
 
     # depth = new_depth#.transpose(1,0)
-    depth = np.reshape(new_depth, newshape=depth.shape)
+    depth = np.reshape(new_depth, newshape=depth.shape).transpose(1,0)
 
     return color_frame, color, depth_frame, depth
 
