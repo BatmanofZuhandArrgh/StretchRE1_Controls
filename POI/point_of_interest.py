@@ -29,6 +29,9 @@ class POI():
         inv_cam_extrinsic_mat:(4x4)
         '''
         self.world_coord = inv_cam_extrinsic_mat.dot(self.cam_coord)
+    
+    def show(self):
+        raise NotImplementedError
 
 #Original Object class to implement along with memory  
 # class WorldObject:

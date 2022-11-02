@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 from POI.location_of_interest import LOI
 from POI.object_of_interest import OOI
 from re1_utils.objdet_utils import plot_all_boxes
@@ -7,7 +8,6 @@ from re1_utils.objdet_utils import plot_all_boxes
 class LandmarkScreen():
     def __init__(self, color_frame, depth_frame) -> None:
         self.height, self.width, _ = color_frame.shape
-        print(depth_frame.shape)
         self.depth_frame = cv2.medianBlur(depth_frame,5)
         self.color_frame = color_frame
 
@@ -26,20 +26,20 @@ class LandmarkScreen():
             [0,0,1,0,0,1,0,0,1,0],
             [0,0,0,0,0,0,0,0,0,0]
         ])
-
+        print(self.depth_frame)
         self.grid = {}
         for w in range(self.grid_repr.shape[0]):
             self.grid[w] = {}
             for h in range(self.grid_repr.shape[1]):
                 img_coord = (int((w+.5)* self.grid_unit_w),int((h+.5)* self.grid_unit_h))
                 bbox = ((int(w* self.grid_unit_w),int(h* self.grid_unit_h)),(int((w+1)* self.grid_unit_w),int((h+1)* self.grid_unit_h)))
-
+                
                 # print(w, h, self.grid_repr[w][h], img_coord, self.depth_frame.shape)
                 # print(self.depth_frame[img_coord[1]][img_coord[0]])
                 depth_grid_unit = self.depth_frame[bbox[0][1]: bbox[1][1], bbox[0][0]: bbox[1][0]] #index by h, w
                 
                 depth = np.median(depth_grid_unit)
-                print(depth_grid_unit, depth, bbox)
+                # print(depth_grid_unit, depth, bbox)
                 
                 self.grid[w][h] = LOI(
                     img_coord=img_coord,
@@ -71,26 +71,31 @@ class LandmarkScreen():
         self.show_locations()
         self.show_objects()
 
-        self.color_frame = cv2.cvtColor(self.color_frame, cv2.COLOR_RGB2BGR)
-        cv2.imwrite('./sample/selection_output.png', self.color_frame)
+        # self.color_frame = cv2.cvtColor(self.color_frame, cv2.COLOR_RGB2BGR)
+        # cv2.imwrite('./sample/selection_output.png', self.color_frame)
+        plt.imsave('./sample/selection_output.png', self.color_frame)
 
-        cv2.imshow('',self.color_frame)
+        # cv2.imshow('',self.color_frame)
         
-        if cv2.waitKey(0) & 0xFF == ord('q'):
-            #closing all open windows 
-            cv2.destroyAllWindows() 
+        # if cv2.waitKey(0) & 0xFF == ord('q'):
+        #     #closing all open windows 
+        #     cv2.destroyAllWindows() 
 
     def update_OOI(self, preds):
         self.cur_preds = preds
         for i in range(preds.shape[0]):
             coord = preds[i, :]
+            bbox = ((int(coord[0]),int(coord[1])),(int(coord[2]),int(coord[3])))
+            depth_grid_unit = self.depth_frame[bbox[0][1]: bbox[1][1], bbox[0][0]: bbox[1][0]] #index by h, w
+            depth = np.median(depth_grid_unit)
+
             img_coord = np.array([(coord[2]-coord[0])/2,(coord[3]-coord[1])/2])
             self.landmarks['objects'][i] = OOI(
                 img_coord = img_coord, 
-                depth = 0,
+                depth = depth,
                 obj_class = int(coord[-1]),
                 obj_atributes = 'None', 
-                bbox = ((coord[0],coord[1]),(coord[2],coord[3])),
+                bbox = bbox,
                 conf_score = coord[4],
                 eid = i
             )
@@ -103,6 +108,16 @@ class LandmarkScreen():
     
     def get_landmarks(self):
         return self.landmarks
+    
+    def get_OOI(self):
+        return self.landmarks['objects']
+    
+    def get_LOI(self):
+        return self.landmarks['locations']
+
+    def show_OOI(self):
+        for i in range(self.cur_preds.shape[0]):
+            self.landmarks['objects'][i].show()
 
 if __name__ == '__main__':
     sample_img = cv2.imread('./sample/color_output.png')

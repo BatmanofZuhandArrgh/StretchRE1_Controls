@@ -26,6 +26,7 @@ def get_rs_intrinsic_mat():
     return intrinsic_mat, intrinsic_mat_dict
 
 def get_rs_extrinsic_mat():
+    raise NotImplementedError
 
 def get_cur_rs_frame(width = 480, height = 640):
     '''
@@ -35,7 +36,6 @@ def get_cur_rs_frame(width = 480, height = 640):
     color: numpy array of rgb frame
     depth_frame: depth image object from pyrealsense
     depth: numpy array of depth frame in meters
-    
     '''
     pipe = rs.pipeline()
     cfg = rs.config()
@@ -54,14 +54,18 @@ def get_cur_rs_frame(width = 480, height = 640):
     color = np.asanyarray(color_frame.get_data())
     color = color.transpose(1,0,2)
     depth = np.asanyarray(depth_frame.get_data())
-    new_depth = np.copy(depth)
 
+    new_depth = []
     #Get distance in meters from the camera
     for h in range(depth.shape[0]):
+        cur_depth = []
         for w in range(depth.shape[1]):
-            new_depth[h][w] = depth_frame.get_distance(w, h)
+            cur_depth.append(depth_frame.get_distance(w, h))
+        new_depth.append(cur_depth)    
 
-    depth = new_depth.transpose(1,0)
+    # depth = new_depth#.transpose(1,0)
+    depth = np.reshape(new_depth, newshape=depth.shape)
+
     return color_frame, color, depth_frame, depth
 
 def get_rs_colorized_depth(depth_frame):

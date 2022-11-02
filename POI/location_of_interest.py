@@ -9,4 +9,7 @@ class LOI(POI):
         self.landmark_color =  (0, 0, 255) #Red for BGR
         self.bbox = bbox
 
+    def show(self):
+        print(f"Location {str(self.bbox)}")
+
     
