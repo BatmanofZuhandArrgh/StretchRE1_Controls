@@ -90,7 +90,7 @@ class LandmarkScreen():
             depth_grid_unit = self.depth_frame[bbox[0][1]: bbox[1][1], bbox[0][0]: bbox[1][0]] #index by h, w
             depth = np.median(depth_grid_unit)
 
-            img_coord = np.array([(coord[2]-coord[0])/2,(coord[3]-coord[1])/2])
+            img_coord = np.array([(coord[2]+coord[0])/2,(coord[3]+coord[1])/2])
             self.landmarks['objects'][i] = OOI(
                 img_coord = img_coord, 
                 depth = depth,
@@ -101,14 +101,16 @@ class LandmarkScreen():
                 eid = i
             )
 
-    def update_base_coords(self, inv_cam_intrinsic_mat, inv_cam_extrinsic_mat):
+    def update_base_coords(self, inv_cam_extrinsic_mat, inv_cam_intrinsic_mat = None):
         for index in self.landmarks['objects'].keys():
-            self.landmarks['objects'][index].set_cam_coord(inv_cam_intrinsic_mat)
+            if inv_cam_intrinsic_mat is not None:
+                self.landmarks['objects'][index].set_cam_coord(inv_cam_intrinsic_mat)
             self.landmarks['objects'][index].set_world_coord(inv_cam_extrinsic_mat)
     
         for w in range(self.grid_repr.shape[0]):
             for h in range(self.grid_repr.shape[1]):
-                self.landmarks['locations'][w][h].set_cam_coord(inv_cam_intrinsic_mat)
+                if inv_cam_intrinsic_mat is not None:
+                    self.landmarks['locations'][w][h].set_cam_coord(inv_cam_intrinsic_mat)
                 self.landmarks['locations'][w][h].set_world_coord(inv_cam_extrinsic_mat)
 
     def update_cam_coords(self, inv_cam_intrinsic_mat):

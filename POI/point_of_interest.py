@@ -20,15 +20,16 @@ class POI():
 
     def set_cam_coord(self, inv_cam_intrinsic_mat):
         '''
-        inv_cam_extrinsic_mat:(3x3)
+        inv_cam_extrinsic_mat:(3x3), convert from image coord
         '''
         self.cam_coord = inv_cam_intrinsic_mat.dot(self.img_coord) * self.depth
 
     def set_world_coord(self, inv_cam_extrinsic_mat):
         '''
-        inv_cam_extrinsic_mat:(4x4)
+        inv_cam_extrinsic_mat:(4x4), convert from camera coord
         '''
-        self.world_coord = inv_cam_extrinsic_mat.dot(self.cam_coord)
+        cam_coord_4x1 = np.concatenate((self.cam_coord, [1]), axis = 0)
+        self.base_coord = inv_cam_extrinsic_mat.dot(cam_coord_4x1)[:-1]
     
     def show(self):
         raise NotImplementedError
