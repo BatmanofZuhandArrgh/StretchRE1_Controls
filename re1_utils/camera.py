@@ -41,7 +41,6 @@ def _get_rs_intrinsic_mat():
     }
 
     intrinsic_mat = np.array([intr.fx, 0, intr.ppx, 0, intr.fy, intr.ppy, 0,0,1]).reshape((3,3))
-    # intrinsic_mat = np.array([intr.fy, 0, intr.ppy, 0, intr.fx, intr.ppx, 0,0,1]).reshape((3,3))
     return intrinsic_mat, intrinsic_mat_dict
 
 def get_rs_intrinsic_mat(width = 480, height = 640):
@@ -61,7 +60,7 @@ def get_rs_intrinsic_mat(width = 480, height = 640):
     pipeline.stop()
     return intrinsic_mat
 
-def get_rs_extrinsic_mat():
+def get_rs_extrinsic_mat(type = 'base2cam'):
     '''
     Extrinsic matrix that transform coordinates from base coordinate system to camera coordinate system
     Modified from fairo/droidlet/lowlevel/hello_robot/remote/remote_hello_robot.py
@@ -81,12 +80,7 @@ def get_rs_extrinsic_mat():
     import pytransform3d.transformations as pt
     import pytransform3d.visualizer as pv
 
-    urdf_path = os.path.join(
-    os.getenv("HELLO_FLEET_PATH"),
-    os.getenv("HELLO_FLEET_ID"),
-    "exported_urdf",
-    "stretch.urdf",
-    )
+    urdf_path = os.path.join(os.getenv("HELLO_FLEET_PATH"), os.getenv("HELLO_FLEET_ID"), "exported_urdf", "stretch.urdf")
     mesh_path = os.path.join(os.getenv("HELLO_FLEET_PATH"), os.getenv("HELLO_FLEET_ID"), "exported_urdf")
 
     tm = UrdfTransformManager()
@@ -96,9 +90,6 @@ def get_rs_extrinsic_mat():
 
     s = robot.get_status()
     robot.stop()
-    
-    camera_transform = tm.get_transform('camera_link','base_link')
-    # print(camera_transform)
 
     head_pan = s["head"]["head_pan"]["pos"]
     head_tilt = s["head"]["head_tilt"]["pos"]
@@ -106,7 +97,14 @@ def get_rs_extrinsic_mat():
     # # Get Camera transform
     tm.set_joint("joint_head_pan", head_pan)
     tm.set_joint("joint_head_tilt", head_tilt)
-    camera_transform = tm.get_transform("camera_color_frame", "base_link")
+
+    if type == 'cam2base':
+        source_coord, target_coord = 'camera_link', 'base_link' #"camera_color_frame"
+    elif type == 'base2cam':
+        source_coord, target_coord = 'base_link', 'camera_link'
+
+    camera_transform = tm.get_transform(source_coord,target_coord)
+
     # print(camera_transform)
     # correct for base_link's z offset from the ground
     # at 0, the correction is -0.091491526943
