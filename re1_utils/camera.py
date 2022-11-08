@@ -70,11 +70,6 @@ def get_rs_extrinsic_mat(type = 'base2cam'):
     robot = Robot()
     robot.startup()
 
-    #Are init in the droidlet
-    # if not robot.is_calibrated():
-    #     robot.home()
-    # robot.stow()
-
     # #Load urdf 3d transform manager
     from pytransform3d.urdf import UrdfTransformManager
     import pytransform3d.transformations as pt
@@ -145,6 +140,7 @@ def get_cur_rs_frame(width = 480, height = 640):
     color_frame = frameset.get_color_frame()
     depth_frame = frameset.get_depth_frame()
     pipe.stop()
+    
     print("Frames Captured")
     color = np.asanyarray(color_frame.get_data())
     color = color.transpose(1,0,2)

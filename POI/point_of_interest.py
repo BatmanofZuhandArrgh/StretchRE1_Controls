@@ -1,5 +1,40 @@
 import numpy as np
+ # Now, the points are in camera frame.
+        # In camera frame
+        # z is positive into the camera
+        # (larger the z, more into the camera)
+        # x is positive to the right
+        # (larger the x, more right of the origin)
+        # y is positive to the bottom
+        # (larger the y, more to the bottom of the origin)
+        #                                 /
+        #                                /
+        #                               / z-axis
+        #                              /
+        #                             /_____________ x-axis (640)
+        #                             |
+        #                             |
+        #                             | y-axis (480)
+        #                             |
+        #                             |
 
+        # We now need to transform this to pyrobot frame, where
+        # x is into the camera, y is positive to the left,
+        # z is positive upwards
+        # https://pyrobot.org/docs/navigation
+        #                            |    /
+        #                 z-axis     |   /
+        #                            |  / x-axis
+        #                            | /
+        #  y-axis        ____________|/
+        #
+        # If you hold the first configuration in your right hand, and
+        # visualize the transformations needed to get to the second
+        # configuration, you'll see that
+        # you have to rotate 90 degrees anti-clockwise around the y axis, and then
+        # 90 degrees clockwise around the x axis.
+        # This results in the final configuration
+        
 class POI():
     #Point of Interest
     def __init__(self, img_coord, depth, eid = None) -> None:
@@ -22,6 +57,7 @@ class POI():
         '''
         inv_cam_extrinsic_mat:(3x3), convert from image coord
         '''
+        img_coord = np.array([640 - self.img_coord[1], self.img_coord[0], 1]) #Since the output of obj det is from a transposed image, so we flipped the img_coord to be compatible with realsense intrinsic matrix #TODO refactor
         self.cam_coord = inv_cam_intrinsic_mat.dot(self.img_coord) * self.depth
 
     def set_world_coord(self, inv_cam_extrinsic_mat):
@@ -30,6 +66,8 @@ class POI():
         '''
         cam_coord_4x1 = np.concatenate((self.cam_coord, [1]), axis = 0)
         self.base_coord = inv_cam_extrinsic_mat.dot(cam_coord_4x1)[:-1]
+        #Flip world coord again
+        # self.base_coord = np.array([self.base_coord[0], self.base_coord[2], -self.base_coord[1]])
     
     def show(self):
         raise NotImplementedError
