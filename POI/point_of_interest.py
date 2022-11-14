@@ -1,39 +1,4 @@
 import numpy as np
- # Now, the points are in camera frame.
-        # In camera frame
-        # z is positive into the camera
-        # (larger the z, more into the camera)
-        # x is positive to the right
-        # (larger the x, more right of the origin)
-        # y is negative to the bottom #FIXED from positive
-        # (larger the y, more to the bottom of the origin)
-        #                                 /
-        #                                /
-        #                               / z-axis
-        #                              /
-        #                             /_____________ x-axis (640)
-        #                             |
-        #                             |
-        #                             | y-axis (480)
-        #                             |
-        #                             |
-
-        # We now need to transform this to pyrobot frame, where
-        # x is into the camera, y is positive to the left,
-        # z is positive upwards
-        # https://pyrobot.org/docs/navigation
-        #                            |    /
-        #                 z-axis     |   /
-        #                            |  / x-axis
-        #                            | /
-        #  y-axis        ____________|/
-        #
-        # If you hold the first configuration in your right hand, and
-        # visualize the transformations needed to get to the second
-        # configuration, you'll see that
-        # you have to rotate 90 degrees anti-clockwise around the y axis, and then
-        # 90 degrees clockwise around the x axis.
-        # This results in the final configuration
         
 class POI():
     #Point of Interest
@@ -59,11 +24,18 @@ class POI():
         '''
         img_coord = np.array([640 - self.img_coord[1], self.img_coord[0], 1]) #Since the output of obj det is from a transposed image, so we flipped the img_coord to be compatible with realsense intrinsic matrix 
         #Now image coord is in the image coordinate of original captured image from realsense
-        self.temp_cam_coord = inv_cam_intrinsic_mat.dot(self.img_coord) * self.depth
+
+        self.temp_cam_coord = inv_cam_intrinsic_mat.dot(img_coord) * self.depth
         #Cam_coord is not in the coordinate system of the realsense camera, where the origin is the center of the image
-        #Ox positive points down, Oy positive points to the left of the camera, Oz is depth, points outwards from the camera
-        self.cam_coord = np.array([-self.temp_cam_coord[1], -self.temp_cam_coord[0],-self.temp_cam_coord[2]])
-        #Cam_coord is now like in the coordinate system above, quoted from droidlet repo
+        # But if we were to consider this in the vertical image coordination, it would be:
+        #Ox positive points up, Oy positive points to the right of the camera, Oz is depth, points outwards from the camera
+        # We validate this by testing
+
+        self.cam_coord = np.array([self.temp_cam_coord[2], -self.temp_cam_coord[1],self.temp_cam_coord[0]])
+        #Realign so it can get extrisic matrix using http://msl.cs.uiuc.edu/planning/node102.html
+        # Ox positive points outwards from camera, Oy positive points to left, Oz positive points upwards
+        #http://msl.cs.uiuc.edu/planning/node101.html#fig:yawpitchroll
+
         
     def set_world_coord(self, inv_cam_extrinsic_mat):
         '''

@@ -3,6 +3,8 @@ import pyrealsense2 as rs
 import numpy as np
 from math import radians
 
+from re1_utils.math_utils import get_rotation_mat
+
 '''
 Coordinate system:
 Image: Oxy like opencv
@@ -13,35 +15,6 @@ Camera:
 ** Although we did find in 
 Base:
 '''
-
-
-def _get_rs_intrinsic_mat():
-    #Depreciated
-    '''
-    Intrinsic matrix to convert from camera coordinate system to image coordinate system
-    '''
-    d = rs.decimation_filter()
-    p = rs.pipeline()
-    p.start()
-    fs = p.wait_for_frames()
-    df = fs.get_depth_frame()
-    processed = d.process(df)
-    prof = processed.get_profile()
-    video_prof = prof.as_video_stream_profile()
-    intr = video_prof.get_intrinsics()
-    
-    intrinsic_mat_dict = {
-        'width': intr.width,
-        'height': intr.height,
-        'ppx': intr.ppx,
-        'ppy': intr.ppy,
-        'fx': intr.fx,
-        'fy': intr.fy,
-        'coeffs': intr.coeffs
-    }
-    
-    intrinsic_mat = np.array([intr.fx, 0, intr.ppx, 0, intr.fy, intr.ppy, 0,0,1]).reshape((3,3))
-    return intrinsic_mat, intrinsic_mat_dict
 
 def get_rs_intrinsic_mat(width = 480, height = 640):
     '''
@@ -59,72 +32,6 @@ def get_rs_intrinsic_mat(width = 480, height = 640):
     intrinsic_mat = np.array([[i.fx, 0, i.ppx], [0, i.fy, i.ppy], [0, 0, 1]])
     pipeline.stop()
     return intrinsic_mat
-
-def get_rs_extrinsic_mat(type = 'base2cam'):
-    '''
-    Extrinsic matrix that transform coordinates from base coordinate system to camera coordinate system
-    Modified from fairo/droidlet/lowlevel/hello_robot/remote/remote_hello_robot.py
-    '''
-    from stretch_body.robot import Robot
-    #Initiate robot
-    robot = Robot()
-    robot.startup()
-
-    # #Load urdf 3d transform manager
-    from pytransform3d.urdf import UrdfTransformManager
-    import pytransform3d.transformations as pt
-    import pytransform3d.visualizer as pv
-
-    urdf_path = os.path.join(os.getenv("HELLO_FLEET_PATH"), os.getenv("HELLO_FLEET_ID"), "exported_urdf", "stretch.urdf")
-    mesh_path = os.path.join(os.getenv("HELLO_FLEET_PATH"), os.getenv("HELLO_FLEET_ID"), "exported_urdf")
-
-    tm = UrdfTransformManager()
-    with open(urdf_path, "r") as f:
-        urdf = f.read()
-        tm.load_urdf(urdf, mesh_path=mesh_path)
-
-    s = robot.get_status()
-    robot.stop()
-
-    head_pan = s["head"]["head_pan"]["pos"]
-    head_tilt = s["head"]["head_tilt"]["pos"]
-    
-    # # Get Camera transform
-    tm.set_joint("joint_head_pan", head_pan)
-    tm.set_joint("joint_head_tilt", head_tilt)
-
-    if type == 'cam2base':
-        source_coord, target_coord = 'camera_link', 'base_link' #"camera_color_frame"
-    elif type == 'base2cam':
-        source_coord, target_coord = 'base_link', 'camera_link'
-
-    camera_transform = tm.get_transform(source_coord,target_coord)
-
-    # print(camera_transform)
-    # correct for base_link's z offset from the ground
-    # at 0, the correction is -0.091491526943
-    # at 90, the correction is +0.11526719 + -0.091491526943
-    # linear interpolate the correction of 0.023775
-    
-#     interp_correction = 0.11526719 * abs(head_tilt) / radians(90)
-#     # print('interp_correction', interp_correction)
-
-#     camera_transform[2, 3] += -0.091491526943 + interp_correction
-    return camera_transform
-
-def get_cam_pan_tilt():
-    from stretch_body.robot import Robot
-    #Initiate robot
-    robot = Robot()
-    robot.startup()
-    s = robot.get_status()
-    robot.stop()
-
-    head_pan = s["head"]["head_pan"]["pos"]
-    head_tilt = s["head"]["head_tilt"]["pos"]
-    #Pan: Left is positive, origin is perpendicular straight forward
-    #Tilt: Up is positive, origin is horizontal
-    return head_pan, head_tilt
 
 def get_cur_rs_frame(width = 480, height = 640):
     '''
@@ -187,22 +94,18 @@ def get_rs_colorized_depth(depth_frame):
     colorized_depth = np.fliplr(colorized_depth)
     return colorized_depth
 
-def get_cam_height_cam():
+def get_cam_height_pan_tilt():
     '''
     Extrinsic matrix that transform coordinates from base coordinate system to camera coordinate system
     Modified from fairo/droidlet/lowlevel/hello_robot/remote/remote_hello_robot.py
+    #Pan: Left is positive, origin is perpendicular straight forward
+    #Tilt: Up is positive, origin is horizontal
     '''
     from stretch_body.robot import Robot
     #Initiate robot
     robot = Robot()
     robot.startup()
 
-    #Are init in the droidlet
-    # if not robot.is_calibrated():
-    #     robot.home()
-    # robot.stow()
-
-    # #Load urdf 3d transform manager
     from pytransform3d.urdf import UrdfTransformManager
     import pytransform3d.transformations as pt
     import pytransform3d.visualizer as pv
@@ -228,13 +131,31 @@ def get_cam_height_cam():
     source_coord, target_coord = 'camera_color_frame', 'link_right_wheel' 
     camera_transform = tm.get_transform(source_coord,target_coord)
     
-    return camera_transform
+    height_from_wheel_center = max(abs(camera_transform[:,3]))
+
+    return head_pan, head_tilt, height_from_wheel_center
+
+def get_rs_extrinsic_mat(type = 'cam2world'):
+    '''
+    
+    '''
+    head_pan, head_tilt, height = get_cam_height_pan_tilt()
+    cam2world_mat = get_rotation_mat(x_angle=0, y_angle=-head_tilt, z_angle=-head_pan)
+    inv_extrinsic_mat = np.concatenate((cam2world_mat, np.array([0,0,height]).reshape(3,1)), axis=1)
+    inv_extrinsic_mat = np.concatenate((inv_extrinsic_mat, np.array([0,0,0,1]).reshape(1,4)), axis=0)
+    
+    if type == 'cam2world' :
+        return inv_extrinsic_mat
+    elif type == 'world2cam':
+        return np.linalg.inv(inv_extrinsic_mat)
+    else:
+        raise ValueError(type)  
 
 if __name__ == "__main__":
     # get_rs_intrinsic_mat()
     # print(get_rs_extrinsic_mat())
     # get_cur_rs_frame()
-    print(get_cam_height_cam())
+    print(get_cam_height_pan_tilt())
     #0.10891263593988053, 0.027611654181941538
     
     #height:1.28575359
