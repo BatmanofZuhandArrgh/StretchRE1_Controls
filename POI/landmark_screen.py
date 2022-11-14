@@ -34,13 +34,8 @@ class LandmarkScreen():
             for h in range(self.grid_repr.shape[1]):
                 img_coord = (int((w+.5)* self.grid_unit_w),int((h+.5)* self.grid_unit_h))
                 bbox = ((int(w* self.grid_unit_w),int(h* self.grid_unit_h)),(int((w+1)* self.grid_unit_w),int((h+1)* self.grid_unit_h)))
-                
-                # print(w, h, self.grid_repr[w][h], img_coord, self.depth_frame.shape)
-                # print(self.depth_frame[img_coord[1]][img_coord[0]])
-                depth_grid_unit = self.depth_frame[bbox[0][1]: bbox[1][1], bbox[0][0]: bbox[1][0]] #index by h, w
-                
-                depth = np.median(depth_grid_unit)
-                # print(depth_grid_unit, depth, bbox)
+            
+                depth = self.get_POI_depth(bbox = bbox, img_coord = img_coord, depth_type = 'mean')
                 
                 self.grid[w][h] = LOI(
                     img_coord=img_coord,
@@ -48,6 +43,7 @@ class LandmarkScreen():
                     bbox = bbox,
                     active=self.grid_repr[w][h],
                 )
+                
         self.cur_preds = None #Current object detected
 
         self.landmarks = {}
@@ -67,7 +63,19 @@ class LandmarkScreen():
     def show_objects(self):
         if self.cur_preds is not None:
             plot_all_boxes(self.cur_preds, self.color_frame)
-    
+            
+    def get_POI_depth(self, bbox = None, img_coord = None, depth_type = 'median'):
+        depth_grid_unit = self.depth_frame[bbox[0][1]: bbox[1][1], bbox[0][0]: bbox[1][0]] #index by h, w
+        
+        if depth_type == 'median':
+            return np.median(depth_grid_unit)
+        elif depth_type == 'mean':
+            return np.mean(depth_grid_unit)
+        elif depth_type == 'center':
+            return self.depth_frame[img_coord[1], img_coord[0]] #Using the center of bbox in depth frame
+        else:
+            raise ValueError(f'invalid depth_type {depth_type}')
+            
     def show(self):
         self.show_locations()
         self.show_objects()
@@ -87,10 +95,10 @@ class LandmarkScreen():
         for i in range(preds.shape[0]):
             coord = preds[i, :]
             bbox = ((int(coord[0]),int(coord[1])),(int(coord[2]),int(coord[3])))
-            depth_grid_unit = self.depth_frame[bbox[0][1]: bbox[1][1], bbox[0][0]: bbox[1][0]] #index by h, w
-            depth = np.median(depth_grid_unit)
+            img_coord = np.array([(coord[2]+coord[0])/2,(coord[3]+coord[1])/2]).astype(int)
 
-            img_coord = np.array([(coord[2]+coord[0])/2,(coord[3]+coord[1])/2])
+            depth = self.get_POI_depth(bbox = bbox, img_coord = img_coord, depth_type = 'mean')
+            
             self.landmarks['objects'][i] = OOI(
                 img_coord = img_coord, 
                 depth = depth,

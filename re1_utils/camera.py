@@ -39,7 +39,7 @@ def _get_rs_intrinsic_mat():
         'fy': intr.fy,
         'coeffs': intr.coeffs
     }
-
+    
     intrinsic_mat = np.array([intr.fx, 0, intr.ppx, 0, intr.fy, intr.ppy, 0,0,1]).reshape((3,3))
     return intrinsic_mat, intrinsic_mat_dict
 
@@ -105,12 +105,26 @@ def get_rs_extrinsic_mat(type = 'base2cam'):
     # at 0, the correction is -0.091491526943
     # at 90, the correction is +0.11526719 + -0.091491526943
     # linear interpolate the correction of 0.023775
-    interp_correction = 0.11526719 * abs(head_tilt) / radians(90)
-    # print('interp_correction', interp_correction)
+    
+#     interp_correction = 0.11526719 * abs(head_tilt) / radians(90)
+#     # print('interp_correction', interp_correction)
 
-    camera_transform[2, 3] += -0.091491526943 + interp_correction
+#     camera_transform[2, 3] += -0.091491526943 + interp_correction
     return camera_transform
 
+def get_cam_pan_tilt():
+    from stretch_body.robot import Robot
+    #Initiate robot
+    robot = Robot()
+    robot.startup()
+    s = robot.get_status()
+    robot.stop()
+
+    head_pan = s["head"]["head_pan"]["pos"]
+    head_tilt = s["head"]["head_tilt"]["pos"]
+    #Pan: Left is positive, origin is perpendicular straight forward
+    #Tilt: Up is positive, origin is horizontal
+    return head_pan, head_tilt
 
 def get_cur_rs_frame(width = 480, height = 640):
     '''
@@ -128,38 +142,43 @@ def get_cur_rs_frame(width = 480, height = 640):
     cfg.enable_stream(rs.stream.color, height, width, rs.format.rgb8, 30)
     cfg.enable_stream(rs.stream.depth, height, width, rs.format.z16, 30)
 
-    profile = pipe.start(cfg)
+    try:
+        profile = pipe.start(cfg)
 
-    for x in range(5):
-        pipe.wait_for_frames()
+        for x in range(5):
+            pipe.wait_for_frames()
 
-    frameset = pipe.wait_for_frames()
-    align = rs.align(rs.stream.color)
-    frameset = align.process(frameset)
+        frameset = pipe.wait_for_frames()
+        align = rs.align(rs.stream.color)
+        frameset = align.process(frameset)
 
-    color_frame = frameset.get_color_frame()
-    depth_frame = frameset.get_depth_frame()
-    pipe.stop()
+        color_frame = frameset.get_color_frame()
+        depth_frame = frameset.get_depth_frame()
+        pipe.stop()
+
+        print("Frames Captured")
+        color = np.asanyarray(color_frame.get_data())
+        color = color.transpose(1,0,2)
+        color = np.fliplr(color)
+
+        depth = np.asanyarray(depth_frame.get_data())
+        depth = np.fliplr(depth)
+
+        new_depth = []
+        #Get distance in meters from the camera
+        for h in range(depth.shape[0]):
+            cur_depth = []
+            for w in range(depth.shape[1]):
+                cur_depth.append(depth_frame.get_distance(w, h))
+            new_depth.append(cur_depth)    
+
+        # depth = new_depth#.transpose(1,0)
+        depth = np.reshape(new_depth, newshape=depth.shape).transpose(1,0)
+        return color_frame, color, depth_frame, depth
     
-    print("Frames Captured")
-    color = np.asanyarray(color_frame.get_data())
-    color = color.transpose(1,0,2)
-    color = np.fliplr(color)
-
-    depth = np.asanyarray(depth_frame.get_data())
-    depth = np.fliplr(depth)
-
-    new_depth = []
-    #Get distance in meters from the camera
-    for h in range(depth.shape[0]):
-        cur_depth = []
-        for w in range(depth.shape[1]):
-            cur_depth.append(depth_frame.get_distance(w, h))
-        new_depth.append(cur_depth)    
-
-    # depth = new_depth#.transpose(1,0)
-    depth = np.reshape(new_depth, newshape=depth.shape).transpose(1,0)
-    return color_frame, color, depth_frame, depth
+    except RuntimeError as e:
+        pipe.stop()
+        raise e
 
 def get_rs_colorized_depth(depth_frame):
     colorizer = rs.colorizer()
@@ -168,7 +187,54 @@ def get_rs_colorized_depth(depth_frame):
     colorized_depth = np.fliplr(colorized_depth)
     return colorized_depth
 
+def get_cam_height_cam():
+    '''
+    Extrinsic matrix that transform coordinates from base coordinate system to camera coordinate system
+    Modified from fairo/droidlet/lowlevel/hello_robot/remote/remote_hello_robot.py
+    '''
+    from stretch_body.robot import Robot
+    #Initiate robot
+    robot = Robot()
+    robot.startup()
+
+    #Are init in the droidlet
+    # if not robot.is_calibrated():
+    #     robot.home()
+    # robot.stow()
+
+    # #Load urdf 3d transform manager
+    from pytransform3d.urdf import UrdfTransformManager
+    import pytransform3d.transformations as pt
+    import pytransform3d.visualizer as pv
+
+    urdf_path = os.path.join(os.getenv("HELLO_FLEET_PATH"), os.getenv("HELLO_FLEET_ID"), "exported_urdf", "stretch.urdf")
+    mesh_path = os.path.join(os.getenv("HELLO_FLEET_PATH"), os.getenv("HELLO_FLEET_ID"), "exported_urdf")
+
+    tm = UrdfTransformManager()
+    with open(urdf_path, "r") as f:
+        urdf = f.read()
+        tm.load_urdf(urdf, mesh_path=mesh_path)
+
+    s = robot.get_status()
+    robot.stop()
+
+    head_pan = s["head"]["head_pan"]["pos"]
+    head_tilt = s["head"]["head_tilt"]["pos"]
+    
+    # # Get Camera transform
+    tm.set_joint("joint_head_pan", head_pan)
+    tm.set_joint("joint_head_tilt", head_tilt)
+
+    source_coord, target_coord = 'camera_color_frame', 'link_right_wheel' 
+    camera_transform = tm.get_transform(source_coord,target_coord)
+    
+    return camera_transform
+
 if __name__ == "__main__":
     # get_rs_intrinsic_mat()
     # print(get_rs_extrinsic_mat())
-    get_cur_rs_frame()
+    # get_cur_rs_frame()
+    print(get_cam_height_cam())
+    #0.10891263593988053, 0.027611654181941538
+    
+    #height:1.28575359

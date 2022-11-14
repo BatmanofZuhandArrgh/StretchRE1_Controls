@@ -5,7 +5,7 @@ import numpy as np
         # (larger the z, more into the camera)
         # x is positive to the right
         # (larger the x, more right of the origin)
-        # y is positive to the bottom
+        # y is negative to the bottom #FIXED from positive
         # (larger the y, more to the bottom of the origin)
         #                                 /
         #                                /
@@ -45,11 +45,11 @@ class POI():
         base_coord= [x, y, z]. Origin is base of robot
         uuid: node if saved in the agent memory
         '''
-        self.img_coord = np.concatenate((img_coord, np.array([1])), axis=0) 
+        self.img_coord = np.concatenate((img_coord, np.array([1])), axis=0) #Img coord is in transformed image
         self.depth = depth
     
-        self.cam_coord = [0,0,0] 
-        self.base_coord = [0,0,0]
+        self.cam_coord = [0,0,0] #Cam coord is in original image
+        self.base_coord = [0,0,0] #Base coord is from transformed image
 
         self.eid = eid 
 
@@ -57,9 +57,14 @@ class POI():
         '''
         inv_cam_extrinsic_mat:(3x3), convert from image coord
         '''
-        img_coord = np.array([640 - self.img_coord[1], self.img_coord[0], 1]) #Since the output of obj det is from a transposed image, so we flipped the img_coord to be compatible with realsense intrinsic matrix #TODO refactor
-        self.cam_coord = inv_cam_intrinsic_mat.dot(self.img_coord) * self.depth
-
+        img_coord = np.array([640 - self.img_coord[1], self.img_coord[0], 1]) #Since the output of obj det is from a transposed image, so we flipped the img_coord to be compatible with realsense intrinsic matrix 
+        #Now image coord is in the image coordinate of original captured image from realsense
+        self.temp_cam_coord = inv_cam_intrinsic_mat.dot(self.img_coord) * self.depth
+        #Cam_coord is not in the coordinate system of the realsense camera, where the origin is the center of the image
+        #Ox positive points down, Oy positive points to the left of the camera, Oz is depth, points outwards from the camera
+        self.cam_coord = np.array([-self.temp_cam_coord[1], -self.temp_cam_coord[0],-self.temp_cam_coord[2]])
+        #Cam_coord is now like in the coordinate system above, quoted from droidlet repo
+        
     def set_world_coord(self, inv_cam_extrinsic_mat):
         '''
         inv_cam_extrinsic_mat:(4x4), convert from camera coord
