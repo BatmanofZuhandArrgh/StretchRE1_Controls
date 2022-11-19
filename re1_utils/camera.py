@@ -137,11 +137,11 @@ def get_cam_height_pan_tilt():
 
 def get_rs_extrinsic_mat(type = 'cam2world'):
     '''
-    
+    Output 4x4 extrinsic matrix
     '''
     head_pan, head_tilt, height = get_cam_height_pan_tilt()
-    cam2world_mat = get_rotation_mat(x_angle=0, y_angle=-head_tilt, z_angle=-head_pan)
-    inv_extrinsic_mat = np.concatenate((cam2world_mat, np.array([0,0,height]).reshape(3,1)), axis=1)
+    rotation_mat = get_rotation_mat(x_angle=0, y_angle=-head_tilt, z_angle=-head_pan)
+    inv_extrinsic_mat = np.concatenate((rotation_mat, np.array([0,0,height]).reshape(3,1)), axis=1)
     inv_extrinsic_mat = np.concatenate((inv_extrinsic_mat, np.array([0,0,0,1]).reshape(1,4)), axis=0)
     
     if type == 'cam2world' :
