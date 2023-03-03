@@ -5,7 +5,7 @@ class POI():
     def __init__(self, img_coord, depth, eid = None) -> None:
         '''
         These are the np.array of coordinates of (the center of) the POI
-        img_coord = [w, h, 1]. Origin #TODO define
+        img_coord = [w, h]. Origin #TODO define
         cam_coord = [x, y, depth]. Origin is camera
         base_coord= [x, y, z]. Origin is base of robot
         uuid: node if saved in the agent memory
@@ -13,8 +13,8 @@ class POI():
         self.img_coord = np.concatenate((img_coord, np.array([1])), axis=0) #Img coord is in transformed image
         self.depth = depth
     
-        self.cam_coord = [0,0,0] #Cam coord is in original image
-        self.base_coord = [0,0,0] #Base coord is from transformed image
+        self.cam_coord = np.array([0,0,0]) #Cam coord is in original image
+        self.base_coord = np.array([0,0,0]) #Base coord is from transformed image
 
         self.eid = eid 
 
