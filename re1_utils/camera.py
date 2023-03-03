@@ -5,17 +5,6 @@ from math import radians
 
 from re1_utils.math_utils import get_rotation_mat
 
-'''
-Coordinate system:
-Image: Oxy like opencv
-Camera: 
-"specified in meters, with the coordinate [0,0,0] referring to the center of the physical imager"
-" Within this space, the positive x-axis points to the right,
- the positive y-axis points down, and the positive z-axis points forward."
-** Although we did find in 
-Base:
-'''
-
 def get_rs_intrinsic_mat(width = 480, height = 640):
     '''
     Modified from fairo/droidlet/lowlevel/hello_robot/remote/remote_hello_robot.py
@@ -36,12 +25,19 @@ def get_rs_intrinsic_mat(width = 480, height = 640):
 def get_cur_rs_frame(width = 480, height = 640):
     '''
     Get 1 image frame from realsense camera
+    Shape should be (640, 480, 3)
     Output:
     color_frame: rgb image object from pyrealsense
     color: numpy array of rgb frame
     depth_frame: depth image object from pyrealsense
     depth: numpy array of depth frame in meters
     '''
+    
+    ctx = rs.context()
+    devices = ctx.query_devices()
+    for dev in devices:
+        dev.hardware_reset()
+
     pipe = rs.pipeline()
 
     cfg = rs.config()
@@ -88,6 +84,7 @@ def get_cur_rs_frame(width = 480, height = 640):
         raise e
 
 def get_rs_colorized_depth(depth_frame):
+    #Return visualized depth, shape (640, 480, 3)
     colorizer = rs.colorizer()
     colorized_depth = np.asanyarray(colorizer.colorize(depth_frame).get_data())
     colorized_depth = colorized_depth.transpose(1,0,2)
@@ -140,6 +137,8 @@ def get_rs_extrinsic_mat(type = 'cam2world'):
     Output 4x4 extrinsic matrix
     '''
     head_pan, head_tilt, height = get_cam_height_pan_tilt()
+    
+    
     rotation_mat = get_rotation_mat(x_angle=0, y_angle=-head_tilt, z_angle=-head_pan)
     inv_extrinsic_mat = np.concatenate((rotation_mat, np.array([0,0,height]).reshape(3,1)), axis=1)
     inv_extrinsic_mat = np.concatenate((inv_extrinsic_mat, np.array([0,0,0,1]).reshape(1,4)), axis=0)

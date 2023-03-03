@@ -49,7 +49,7 @@ class LandmarkScreen():
         self.landmarks = {}
         
         self.landmarks['locations'] = self.grid
-        self.landmarks['objects'] = {} 
+        self.landmarks['objects'] = [] 
 
     def show_locations(self):
         for w in range(self.grid_repr.shape[0]):
@@ -99,7 +99,7 @@ class LandmarkScreen():
 
             depth = self.get_POI_depth(bbox = bbox, img_coord = img_coord, depth_type = 'mean')
             
-            self.landmarks['objects'][i] = OOI(
+            self.landmarks['objects'].append(OOI(
                 img_coord = img_coord, 
                 depth = depth,
                 obj_class = int(coord[-1]),
@@ -107,10 +107,10 @@ class LandmarkScreen():
                 bbox = bbox,
                 conf_score = coord[4],
                 eid = i
-            )
+            ))
 
     def update_base_coords(self, inv_cam_extrinsic_mat, inv_cam_intrinsic_mat = None):
-        for index in self.landmarks['objects'].keys():
+        for index in range(len(self.landmarks['objects'])):
             if inv_cam_intrinsic_mat is not None:
                 self.landmarks['objects'][index].set_cam_coord(inv_cam_intrinsic_mat)
             self.landmarks['objects'][index].set_world_coord(inv_cam_extrinsic_mat)
@@ -122,7 +122,7 @@ class LandmarkScreen():
                 self.landmarks['locations'][w][h].set_world_coord(inv_cam_extrinsic_mat)
 
     def update_cam_coords(self, inv_cam_intrinsic_mat):
-        for index in self.landmarks['objects'].keys():
+        for index in range(len(self.landmarks['objects'])):
             self.landmarks['objects'][index].set_cam_coord(inv_cam_intrinsic_mat)     
 
         for w in range(self.grid_repr.shape[0]):
@@ -133,13 +133,20 @@ class LandmarkScreen():
         return self.landmarks
     
     def get_OOI(self):
-        return self.landmarks['objects']
+        #Sort by img coords, top to bottom, left to right:
+        newlist = list(self.landmarks['objects'])
+        dists = [obj.img_coord[0]**2 + obj.img_coord[1]**2 for obj in newlist]
+        
+        inds = np.array(dists).argsort()
+
+        return np.array(newlist)[inds].tolist()
+
     
     def get_LOI(self):
         return self.landmarks['locations']
 
     def show_OOI(self):
-        for i in range(self.cur_preds.shape[0]):
+        for i in range(len(self.landmarks['objects'])):
             self.landmarks['objects'][i].show()
 
 if __name__ == '__main__':

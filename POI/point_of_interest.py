@@ -29,13 +29,12 @@ class POI():
         #Cam_coord is not in the coordinate system of the realsense camera, where the origin is the center of the image
         # But if we were to consider this in the vertical image coordination, it would be:
         #Ox positive points up, Oy positive points to the right of the camera, Oz is depth, points outwards from the camera
-        # We validate this by testing
-
+        
         self.cam_coord = np.array([self.temp_cam_coord[2], -self.temp_cam_coord[1],self.temp_cam_coord[0]])
         #Realign so it can get extrisic matrix using http://msl.cs.uiuc.edu/planning/node102.html
+        #Origin at the center of the camera
         # Ox positive points outwards from camera, Oy positive points to left, Oz positive points upwards
         #http://msl.cs.uiuc.edu/planning/node101.html#fig:yawpitchroll
-
         
     def set_world_coord(self, inv_cam_extrinsic_mat):
         '''

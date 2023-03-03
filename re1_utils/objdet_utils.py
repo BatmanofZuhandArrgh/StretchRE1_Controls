@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import yaml
 from pprint import pprint
+from yolov7.predict import preprocessing, postprocessing
 
 LABEL_PATH = './yolov7/data/coco.yaml'
 
@@ -44,3 +45,14 @@ def plot_all_boxes(preds, img, label_dict = None):
     
     for pred in preds:
         plot_one_box(pred, img, label=label_dict[pred[-1]]['label'], color=label_dict[pred[-1]]['color'], line_thickness=1)
+        
+def predict(model, config_dict, color_frame, stride, device):
+    #Resize, pad
+    color_img = preprocessing(config_dict, color_frame, stride, device) 
+
+    #Inference
+    pred = model(color_img, augment=config_dict['augment'])[0] #Shape (1, num_preds, 85)
+
+    #nms and scale coordinates
+    pred = postprocessing(config_dict, pred, color_frame.shape, color_img.shape)
+    return pred
