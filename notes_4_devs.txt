@@ -1,0 +1,11 @@
+RPLidar can be used for obstacle avoidance. 
+Run to get the range and angles:
+'''
+stretch_rp_lidar_jog.py --range
+'''
+
+See: iter_measurments() and iter_scans()
+https://rplidar.readthedocs.io/en/latest/
+
+Output is (quality, angle of lidar point, range distance from the center of the lidar in mm)
+The angle == 240 degrees is roughly in the front-facing direction of the robot. (
