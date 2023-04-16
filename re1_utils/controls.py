@@ -1,6 +1,8 @@
+#!/usr/bin/python
+
+import time
 import stretch_body.robot
 from stretch_body.hello_utils import deg_to_rad
-from math import radians
 #import mpldatacursor
 print("Environment Ready")
 '''
@@ -69,10 +71,19 @@ def retract_arm():
     a.stop()
 
 def rotate_base(degree):
+        # import stretch_body.arm as arm
+
     robot=stretch_body.robot.Robot()
+    print(robot.get_status())
+
     robot.startup()
-    print('here')
+    print(robot.get_status())
+
     robot.base.rotate_by(deg_to_rad(degree))
+    robot.push_command()
+    print(robot.get_status())
+
+    # time.sleep(5)
     robot.stop()
 
 if __name__ == '__main__':
