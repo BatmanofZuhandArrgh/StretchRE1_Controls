@@ -52,14 +52,18 @@ class NavigationControl():
 
         #Rotate robot    
         os.system("rosservice call /switch_to_navigation_mode")
-        spin()
+        spin(spin_vel = 36, time =10)
 
         rospy.sleep(15)
 
         #Save map
-        subprocess.Popen(["rosrun", "map_server", "map_saver", '-f', self.map_file], stdout=subprocess.PIPE)
-        rospy.sleep(10)
-        
+        try:
+            save_proc = subprocess.Popen(["rosrun", "map_server", "map_saver", '-f', self.map_file], stdout=subprocess.PIPE) #automatically shutdown when done
+            rospy.sleep(10)
+        except KeyboardInterrupt:
+            print("Interrupt map-saving process")
+            save_proc.terminate()
+
         launch.shutdown()    
 
     def nav(self, x, y, theta):
@@ -71,15 +75,22 @@ class NavigationControl():
         '''
         #4. Navigate to goal coordinate
         # os.system("roslaunch stretch_navigation navigation.launch map_yaml:={}.yaml".format(self.map_file))
-        subprocess.Popen(["roslaunch", "stretch_navigation", "navigation.launch", "map_yaml:={}.yaml".format(self.map_file)])
+        try:
+            nav_proc = subprocess.Popen(["roslaunch", "stretch_navigation", "navigation.launch", "map_yaml:={}.yaml".format(self.map_file)])
 
-        rospy.init_node('navigation', argv=sys.argv)
-        nav = Nav()
-        nav.go_to(x, y, theta)
-
+            rospy.init_node('navigation', argv=sys.argv)
+            nav = Nav()
+            nav.go_to(x, y, theta)
+            rospy.sleep(10)
+        except KeyboardInterrupt:
+            print("Interrupt navigating process")
+            nav_proc.terminate()
+        
+        print('Finished moving')
+        nav_proc.terminate()        
 
 if __name__ == '__main__':
     nav_con = NavigationControl()
-    nav_con.map()
-    # nav_con.nav(-0.25, 0, 0)
+    # nav_con.map()
+    nav_con.nav(0.2, 0, 0)
     nav_con.stop_roscore()

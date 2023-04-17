@@ -44,7 +44,7 @@ def move_head(joint, x_r ):
 def retract_arm():
     #Retract arm and gripper
 
-    #Homing lift
+    # Homing lift
     import stretch_body.lift as lift
     l=lift.Lift()
     if not l.startup(threaded=False):
@@ -57,9 +57,13 @@ def retract_arm():
     g=wrist_yaw.WristYaw()
     if not g.startup(threaded=False):
         exit()
+    g.home()
+    time.sleep(2.0)
+
     v_des=g.params['motion']['default']['vel']
     a_des=g.params['motion']['default']['accel']
     g.move_to(deg_to_rad(90), v_des, a_des)
+    time.sleep(2.0)
     g.stop()
 
     #Homing arm
@@ -67,7 +71,19 @@ def retract_arm():
     a=arm.Arm()
     if not a.startup(threaded=False):
         exit()
-    a.home() #Retract arm to minimum length
+    a.motor.disable_sync_mode()
+    a.push_command()
+    # a.pretty_print()
+    # a.move_by(
+    #     x_m=0.18,
+    #     v_m=a.params['motion']['default']['vel_m'], 
+    #     a_m=a.params['motion']['default']['accel_m'],
+    #     stiffness=1.0,
+    #     req_calibration=False 
+    # ) #Retract arm to minimum length
+    a.move_to(x_m=0.05)
+    a.push_command()
+    time.sleep(1)
     a.stop()
 
 def rotate_base(degree):
