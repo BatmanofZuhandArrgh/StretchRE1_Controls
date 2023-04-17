@@ -10,8 +10,9 @@ from stretch_body.robot import Robot
 from roslaunch.parent import ROSLaunchParent
 
 sys.path.append('re1_utils')
-from controls import retract_arm, reset_head_position, rotate_base
-from base_nav_node import spin
+from misc import retract_arm, reset_head_position, rotate_base
+from base_move import spin
+from navigation import Nav
 
 class NavigationControl():
     def __init__(self):
@@ -24,7 +25,8 @@ class NavigationControl():
 
         self.target_object_world_coord = None
         self.start_roscore()
-
+        
+        self.map_file = "/home/hello-robot/stretch_user/maps/py_temp"
     def start_roscore(self):
         # Start roscore
         print('Starting Master')
@@ -35,7 +37,6 @@ class NavigationControl():
     def stop_roscore(self):
         print("Ending Master")
         self.parent.shutdown()
-
 
     def map(self):
         #3. Map the room
@@ -56,13 +57,29 @@ class NavigationControl():
         rospy.sleep(15)
 
         #Save map
-        subprocess.Popen(["rosrun", "map_server", "map_saver", '-f', "/home/hello-robot/stretch_user/maps/py_temp"], stdout=subprocess.PIPE)
+        subprocess.Popen(["rosrun", "map_server", "map_saver", '-f', self.map_file], stdout=subprocess.PIPE)
         rospy.sleep(10)
         
         launch.shutdown()    
 
+    def nav(self, x, y, theta):
+        '''
+        Input x, y, and theta coordinate of the robot from the starting position
+        Ox is straight forward positive (meter)
+        Oy is left to right positive (meter)
+        theta (degree)
+        '''
+        #4. Navigate to goal coordinate
+        # os.system("roslaunch stretch_navigation navigation.launch map_yaml:={}.yaml".format(self.map_file))
+        subprocess.Popen(["roslaunch", "stretch_navigation", "navigation.launch", "map_yaml:={}.yaml".format(self.map_file)])
+
+        rospy.init_node('navigation', argv=sys.argv)
+        nav = Nav()
+        nav.go_to(x, y, theta)
+
+
 if __name__ == '__main__':
     nav_con = NavigationControl()
     nav_con.map()
-
+    # nav_con.nav(-0.25, 0, 0)
     nav_con.stop_roscore()

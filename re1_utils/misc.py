@@ -67,23 +67,17 @@ def retract_arm():
     a=arm.Arm()
     if not a.startup(threaded=False):
         exit()
-    a.home()
+    a.home() #Retract arm to minimum length
     a.stop()
 
 def rotate_base(degree):
-        # import stretch_body.arm as arm
-
     robot=stretch_body.robot.Robot()
-    print(robot.get_status())
 
     robot.startup()
-    print(robot.get_status())
-
     robot.base.rotate_by(deg_to_rad(degree))
     robot.push_command()
-    print(robot.get_status())
 
-    # time.sleep(5)
+    time.sleep(5)
     robot.stop()
 
 if __name__ == '__main__':
@@ -104,6 +98,7 @@ if __name__ == '__main__':
     # reset_head_position()
     # move_head('head_tilt', radians(-20))
 
-    # retract_arm()
+    retract_arm()
 
-    rotate_base(90)
+
+    # rotate_base(90)

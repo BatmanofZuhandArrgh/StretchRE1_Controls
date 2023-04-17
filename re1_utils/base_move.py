@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 import rospy
 from geometry_msgs.msg import Twist
-
 from stretch_body.hello_utils import deg_to_rad
 
-
+# Source: https://docs.hello-robot.com/0.2/stretch-tutorials/ros1/example_1/
 #A ROS Node that rotates or move the base of the robot
 class Move:
     def __init__(self):
@@ -47,11 +46,12 @@ class Move:
         print('ready to publish')
         self.pub.publish(command) #publish
 
-def spin(spin_vel = 30, time = 4, disable_signals=False):
+def spin(spin_vel = -36, time = 3, disable_signals=False):
     # rospy.init_node('spin', anonymous=True, disable_signals= disable_signals)
+    #If time * spin_vel == 360, it should be a perfect loop
     base_motion = Move()
-    loop_frequency = 10
-    rate = rospy.Rate(loop_frequency) #Going through the loop 10 times per second
+    loop_frequency = time 
+    rate = rospy.Rate(loop_frequency) #Going through the loop 10(time) times per second
     counter = 0
     while not rospy.is_shutdown():
         base_motion.rotate(spin_vel)
