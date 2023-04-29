@@ -13,7 +13,7 @@ class Move:
         declares that your node is publishing to the /stretch/cmd_vel topic using the message type Twist.
         The queue_size argument limits the amount of queued messages if any subscriber is not receiving them fast enough.
         '''
-    def move_forward(self):
+    def move(self, x, y, z):
         """
         Function that publishes Twist messages
         :param self: The self reference.
@@ -21,9 +21,9 @@ class Move:
         :publishes command: Twist message.
         """
         command = Twist()
-        command.linear.x = -0.1
-        command.linear.y = 0.0
-        command.linear.z = 0.0
+        command.linear.x = x
+        command.linear.y = y
+        command.linear.z = z
         command.angular.x = 0.0
         command.angular.y = 0.0
         command.angular.z = 0.0
@@ -43,7 +43,6 @@ class Move:
         command.angular.x = 0.0
         command.angular.y = 0.0
         command.angular.z = deg_to_rad(degree)
-        print('ready to publish')
         self.pub.publish(command) #publish
 
 def spin(spin_vel = -36, time = 3, disable_signals=False):

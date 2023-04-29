@@ -8,6 +8,7 @@ import keyboard
 
 from stretch_body.robot import Robot
 from roslaunch.parent import ROSLaunchParent
+from stretch_body.hello_utils import deg_to_rad
 
 sys.path.append('re1_utils')
 from misc import retract_arm, reset_head_position, rotate_base
@@ -17,16 +18,16 @@ from navigation import Nav
 class NavigationControl():
     def __init__(self):
 
-        #1.Retract the lift and arm for easier mapping
+        #1.Retract the lift and arm for easier mapping and navigating. Can ignore this if the lift is already in preferable position
         # retract_arm() 
 
         #2.Homing head position
         # reset_head_position()
 
-        self.target_object_world_coord = None
         self.start_roscore()
         
         self.map_file = "/home/hello-robot/stretch_user/maps/py_temp"
+        
     def start_roscore(self):
         # Start roscore
         print('Starting Master')
@@ -52,7 +53,8 @@ class NavigationControl():
 
         #Rotate robot    
         os.system("rosservice call /switch_to_navigation_mode")
-        spin(spin_vel = 36, time =10)
+        spin(spin_vel = 36, time = 10)
+        # spin(spin_vel = -36, time =5)
 
         rospy.sleep(15)
 
@@ -66,7 +68,7 @@ class NavigationControl():
 
         launch.shutdown()    
 
-    def nav(self, x, y, theta):
+    def nav(self, x, y, theta, full_map = True):
         '''
         Input x, y, and theta coordinate of the robot from the starting position
         Ox is straight forward positive (meter)
@@ -75,9 +77,13 @@ class NavigationControl():
         '''
         #4. Navigate to goal coordinate
         # os.system("roslaunch stretch_navigation navigation.launch map_yaml:={}.yaml".format(self.map_file))
+        if full_map:
+            self.map_file = "/home/hello-robot/stretch_user/maps/py_fullmap"
         try:
             nav_proc = subprocess.Popen(["roslaunch", "stretch_navigation", "navigation.launch", "map_yaml:={}.yaml".format(self.map_file)])
-
+            print('subprocess ID --------------------------')
+            print(nav_proc.pid)
+            
             rospy.init_node('navigation', argv=sys.argv)
             nav = Nav()
             nav.go_to(x, y, theta)
@@ -88,9 +94,34 @@ class NavigationControl():
         
         print('Finished moving')
         nav_proc.terminate()        
+    
+    def naive_nav(self, x, y, theta):
+        self.stop_roscore() # Stopping after starting master automatically when init
+        robot = Robot()
+        robot.startup()
+        robot.base.translate_by(x_m=x) 
+        robot.push_command()
+        time.sleep(10)
+
+        if y:
+            
+            #Right is positive, left is negative 
+            left_or_right_turn = 90 if theta > 0 else -90 
+            robot.base.rotate_by(deg_to_rad(left_or_right_turn))
+            robot.push_command()
+            time.sleep(10)
+
+            robot.base.translate_by(x_m=y) 
+            robot.push_command()
+            time.sleep(5)
+
+        robot.stop() 
+
 
 if __name__ == '__main__':
+    x, y, theta = 0, 0, 0
     nav_con = NavigationControl()
     # nav_con.map()
-    nav_con.nav(0.2, 0, 0)
-    nav_con.stop_roscore()
+    # nav_con.nav(1, 0, 0, full_map = True)
+    nav_con.naive_nav(x, y, theta)
+    # nav_con.stop_roscore()

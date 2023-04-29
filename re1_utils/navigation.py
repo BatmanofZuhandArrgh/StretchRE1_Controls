@@ -40,22 +40,21 @@ class Nav:
         return Quaternion(*transformations.quaternion_from_euler(0.0, 0.0, theta))
     
     def go_to(self, x, y, theta):
-            """
-            Drive the robot to a particular pose on the map. The Stretch only needs
-            (x, y) coordinates and a heading.
-            :param x: x coordinate in the map frame.
-            :param y: y coordinate in the map frame.
-            :param theta: heading (angle with the x-axis in the map frame)
-            """
-            rospy.loginfo('{0}: Heading for ({1}, {2}) at {3} radians'.format(self.__class__.__name__,
-            x, y, theta))
+        """
+        Drive the robot to a particular pose on the map. The Stretch only needs
+        (x, y) coordinates and a heading.
+        :param x: x coordinate in the map frame.
+        :param y: y coordinate in the map frame.
+        :param theta: heading (angle with the x-axis in the map frame)
+        """
+        rospy.loginfo('{0}: Heading for ({1}, {2}) at {3} radians'.format(self.__class__.__name__, x, y, theta))
 
-            self.goal.target_pose.pose.position.x = x
-            self.goal.target_pose.pose.position.y = y
-            self.goal.target_pose.pose.orientation = self.get_quaternion(theta)
+        self.goal.target_pose.pose.position.x = x
+        self.goal.target_pose.pose.position.y = y
+        self.goal.target_pose.pose.orientation = self.get_quaternion(theta)
 
-            self.client.send_goal(self.goal, done_cb=self.done_callback)
-            self.client.wait_for_result()
+        self.client.send_goal(self.goal, done_cb=self.done_callback)
+        self.client.wait_for_result()
 
     def done_callback(self, status, result):
         """
