@@ -98,7 +98,7 @@ def rotate_base(degree):
 
 if __name__ == '__main__':
 #     robot=stretch_body.robot.Robot()
-#     robot.startuqwkonqp()nq
+#     robot.startup()
 #     # robot.stow() # Still a problem with out-of-date parameters
   
 #     robot.base.pretty_print()

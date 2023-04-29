@@ -99,27 +99,42 @@ class NavigationControl():
         self.stop_roscore() # Stopping after starting master automatically when init
         robot = Robot()
         robot.startup()
-        robot.base.translate_by(x_m=x) 
-        robot.push_command()
-        time.sleep(10)
 
-        if y:
-            
-            #Right is positive, left is negative 
-            left_or_right_turn = 90 if theta > 0 else -90 
-            robot.base.rotate_by(deg_to_rad(left_or_right_turn))
+        # Move forward or backward
+        if x!= 0:
+            robot.base.translate_by(x_m=x) 
             robot.push_command()
             time.sleep(10)
 
+        # Right is positive, left is negative, switch this once intergrate with the landmark-camera module
+        # If the robot needs to go sideways, it will turn to the right (+Ox), and start to go front or back
+        left_or_right_turn = -90 if y != 0 else 0
+        # Turn
+        if left_or_right_turn != 0:
+            robot.base.rotate_by(deg_to_rad(left_or_right_turn))
+            robot.push_command()
+            time.sleep(5) 
+
+        # Move left or right
+        if y != 0:
             robot.base.translate_by(x_m=y) 
             robot.push_command()
-            time.sleep(5)
+            time.sleep(10) 
+
+        print('Reach target location')
+        
+        if -left_or_right_turn + theta != 0:
+            robot.base.rotate_by(deg_to_rad(-left_or_right_turn + theta))
+            robot.push_command()
+            time.sleep(5) 
+
+        print('Reach target rotation')
 
         robot.stop() 
 
 
 if __name__ == '__main__':
-    x, y, theta = 0, 0, 0
+    x, y, theta = 0, 0, -35
     nav_con = NavigationControl()
     # nav_con.map()
     # nav_con.nav(1, 0, 0, full_map = True)
