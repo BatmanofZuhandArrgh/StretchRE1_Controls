@@ -30,7 +30,6 @@ class Nav:
         self.goal.target_pose.pose.orientation.z = 0.0
         self.goal.target_pose.pose.orientation.w = 1.0
 
-
     def get_quaternion(self,theta):
         """
         A function to build Quaternians from Euler angles. Since the Stretch only

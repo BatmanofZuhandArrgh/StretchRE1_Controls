@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import IPython
 
-class PathPlanner():
+class Visualizer():
     def __init__(self, landmark_dict):
         self.landmarks = landmark_dict
         self.graph = None
@@ -21,7 +21,7 @@ class PathPlanner():
         '''
         self.viz_frame = np.zeros(shape=(height, width, 3))
         
-        for index in self.landmarks['objects'].keys():
+        for index in range(len(self.landmarks['objects'])):
             _, y, z = self.landmarks['objects'][index].cam_coord
             viz_x = width/2 - y/max_x_range *  width/2
             viz_y = height/2 - z/max_y_range * height/2
@@ -58,7 +58,7 @@ class PathPlanner():
         
         cv2.circle(self.viz_frame, (int(width//2)-1, height-1), 5, (0,255, 255), 5)
 
-        for index in self.landmarks['objects'].keys():
+        for index in range(len(self.landmarks['objects'])):
             x, y, z = self.landmarks['objects'][index].base_coord
             # print(x,y,z)
             center_coordinate = self.convert_base2viz_coord(x, y,z,  max_x_range, max_y_range, max_z_range, height, width, coord_type = coord_type)
@@ -82,5 +82,5 @@ class PathPlanner():
         # plt.show()
 
 if __name__ == '__main__':
-    planner = PathPlanner()
+    viz = Visualizer()
     print(1)

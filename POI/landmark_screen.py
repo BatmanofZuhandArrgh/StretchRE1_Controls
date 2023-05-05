@@ -82,7 +82,7 @@ class LandmarkScreen():
 
         # self.color_frame = cv2.cvtColor(self.color_frame, cv2.COLOR_RGB2BGR)
         # cv2.imwrite('./sample/selection_output.png', self.color_frame)
-        plt.imsave('./sample/selection_output.png', self.color_frame)
+        # plt.imsave('./sample/selection_output.png', self.color_frame)
 
         # cv2.imshow('',self.color_frame)
         
