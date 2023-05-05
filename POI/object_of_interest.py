@@ -31,6 +31,6 @@ class OOI(POI):
         return self.obj_name, self.obj_atrs
 
     def show(self):
-        print(self.obj_name + ' at ' + str(self.bbox) + f' depth {self.depth} meters')
+        print(self.obj_name + ' id_' + str(self.eid) + ' at ' + str(self.bbox) + f' depth {self.depth} meters')
 
 
