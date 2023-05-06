@@ -141,7 +141,6 @@ class LandmarkScreen():
         inds = np.array(dists).argsort()
 
         return np.array(newlist)[inds].tolist()
-
     
     def get_LOI(self):
         return self.landmarks['locations']
