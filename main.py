@@ -6,9 +6,9 @@ import roslaunch
 import rospy
 import keyboard
 
+from stretch_body.hello_utils import deg_to_rad
 from stretch_body.robot import Robot
 from roslaunch.parent import ROSLaunchParent
-from stretch_body.hello_utils import deg_to_rad
 
 sys.path.append('re1_utils')
 from misc import retract_arm, reset_head_position, rotate_base
@@ -228,7 +228,7 @@ class NavigationControl():
         print('Status: Reach original location')
 
 if __name__ == '__main__':
-    x, y, theta =0, -0.45, 45
+    x, y, theta =0.5, -0.45, 45
     nav_con = NavigationControl()
     nav_con.naive_nav(x, y, theta)
     nav_con.naive_return()
@@ -236,5 +236,5 @@ if __name__ == '__main__':
     # x, y, theta =0, -0.45, 45
     # nav_con = NavigationControl()
     # nav_con.map()
-    # nav_con.nav(0.5, 0, 0, full_map = True)
+    # # nav_con.nav(0.5, 0, 0, full_map = True)
     # nav_con.stop_roscore()
