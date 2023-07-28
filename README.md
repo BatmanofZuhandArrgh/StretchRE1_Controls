@@ -1,6 +1,10 @@
 # Overview
 Controls components for [RE1 Stretch](https://hello-robot.com/product) using the [stretch_body API](https://docs.hello-robot.com/0.2/).
 
+ROS v1 is used for this repository.
+
+See control_flow.md for the details. 
+
 <picture>
  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/BatmanofZuhandArrgh/StretchRE1_Controls/main/ConferencePoster.jpg">
  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/BatmanofZuhandArrgh/StretchRE1_Controls/main/ConferencePoster.jpg">
@@ -16,13 +20,7 @@ The repository contains modules in folders in the main directory:
 - control_flow.md: Full elaboration of the control flow and more notes for devs
 - Other demo jupyter notebooks, guide mds, pdfs, graphs and posters
 
-<picture>
- <source media="(prefers-color-scheme: dark)" srcset="hhttps://raw.githubusercontent.com/BatmanofZuhandArrgh/StretchRE1_Controls/main/BCI_2_RE1_flowchart_withoutmemory.png">
- <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/BatmanofZuhandArrgh/StretchRE1_Controls/main/BCI_2_RE1_flowchart_withoutmemory.png">
- <img alt="YOUR-ALT-TEXT" src="https://raw.githubusercontent.com/BatmanofZuhandArrgh/StretchRE1_Controls/main/BCI_2_RE1_flowchart_withoutmemory.png">
-</picture>
-
-**Memory**
+**1. Memory**
 
 Memory code heavily inspired and taken from fairo's droidlet's memory module 
 [droidlet](https://github.com/facebookresearch/fairo/tree/main/droidlet/memory) provides a memory system that can store generic metadata. This memory system is used by the planner/controller to do tasks utilizing context provided by information stored in memory.
@@ -37,7 +35,7 @@ Note: This was developed first before everything else, so may not be compatible 
 
 See Demo_Droidlet_Memory.ipynb and Demo_ObjDet.ipynb
 
-**Yolov7**
+**2. Yolov7**
 
 Cloned from [yolov7](https://github.com/BatmanofZuhandArrgh/yolov7/tree/a0bbdb1fd768663eb8ddcf6fb505801a14954264)
 
@@ -45,13 +43,13 @@ Please see yolov7/RE1_README.md to install and use
 
 See Demo_CoordViz.ipynb for OOI visualization and Demo_ObjDet.ipynb for perception and image processing
 
-**POI**
+**3. POI**
 
 Objects of Interest (OOI) and Locations of Interest (LOI) inherit from Points of Interest (POI). After SceneMap, POI's locations are mapped onto the world coordinates for the user screen to be chosen as a target.
 
 See Demo_CoordViz.ipynb for OOI visualization and Demo_ObjDet.ipynb for perception and image processing
 
-**main.py**
+**4. main.py**
 Full controls class NavigationControl. Inputs are the world coordinate of the target and the robot would move to the target, and return to the original position.
 
 - map() is an automatic naive mapping of the room by rotating the robot and lidar-scanning the room, then saving the map, save in self.cur_map_file. Otherwise, to use a full complete map, map the room manually beforehand using this [guide](https://github.com/hello-robot/stretch_ros/tree/noetic/stretch_navigation).
@@ -62,16 +60,14 @@ and navigation in itself. Needs to be run untethered.
 
 # Installation:
 
-``
-git clone https://github.com/BatmanofZuhandArrgh/RE1.git
-cd RE1
+```
+git clone https://github.com/BatmanofZuhandArrgh/StretchRE1_Controls.git
+cd StretchRE1_Controls
 pip install -r requirements.txt
-
-<!-- git clone https://github.com/BatmanofZuhandArrgh/yolov7.git -->
 
 git submodule update --init
 pip install -r yolov7/requirements.txt
-``
+```
 
 
 

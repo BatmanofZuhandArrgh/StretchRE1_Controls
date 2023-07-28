@@ -4,6 +4,14 @@ Stretch RE1 flow in its non-memory form is divided in 4 parts
 - Navigation Control (NavCon)   : Navigating to the target and returning to the original position
 - Grasp                         : Grasping the target object
 
+See BCI_2_RE1_flowchart_withoutmemory.png
+
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="hhttps://raw.githubusercontent.com/BatmanofZuhandArrgh/StretchRE1_Controls/main/BCI_2_RE1_flowchart_withoutmemory.png">
+ <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/BatmanofZuhandArrgh/StretchRE1_Controls/main/BCI_2_RE1_flowchart_withoutmemory.png">
+ <img alt="YOUR-ALT-TEXT" src="https://raw.githubusercontent.com/BatmanofZuhandArrgh/StretchRE1_Controls/main/BCI_2_RE1_flowchart_withoutmemory.png">
+</picture>
+
 1. SceneMap
 Assuming the Robot (RE1) will start in a position next to the user, and it will start by scanning the entire space by spinning the base in its place. RE1, in every discrete interval of 10 degrees, it sends the image captured by RE1's camera and its set of landmark to BCI. The user can choose a landmark to move to, or to keep spinning the robot. 
 
