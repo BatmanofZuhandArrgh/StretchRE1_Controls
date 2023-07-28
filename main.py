@@ -19,12 +19,13 @@ class NavigationControl():
     def __init__(self):
 
         #1.Retract the lift and arm for easier mapping and navigating. Can ignore this if the lift is already in preferable position
-        # retract_arm() 
+        retract_arm() 
 
         #2.Homing head position
-        # reset_head_position()
+        reset_head_position()
         
         self.pre_map_file = "/home/hello-robot/stretch_user/maps/py_fullmap" # Map filepath when the room was mapped before navigation manually  
+        #Using https://github.com/hello-robot/stretch_ros/tree/noetic/stretch_navigation
         self.cur_map_file = "/home/hello-robot/stretch_user/maps/py_temp"    # Nap filepath when NavigationControl.map() was used to do naive mapping
         self.map_file = None # Decide which map to use later
 
@@ -98,7 +99,7 @@ class NavigationControl():
         #4. Navigate to goal coordinate
         #Choose map
         print('================================================')
-        print('Untested code. ROS navigation module is not the best. Do not use this. Use the straight forward naive_nav()')
+        print('Untested code. ROS navigation module is not the best. Do not use this. Use the straight forward naive_nav() when possible')
         print('================================================')
         self.start_roscore()
         time.sleep(10)
@@ -137,7 +138,7 @@ class NavigationControl():
         time.sleep(10)
 
     def naive_nav(self, x, y, theta):
-        # Dead reckoning. No Map.
+        # Dead reckoning to the target. No Map.
 
         #Assign so that the robot remember where it is
         self.target_x = x
