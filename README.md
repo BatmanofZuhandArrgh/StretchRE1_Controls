@@ -1,3 +1,11 @@
+This repository contains controls components to Madhav Lolla and Dr. Anca Ralescu's lab's and research
+
+<picture>
+ <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/BatmanofZuhandArrgh/StretchRE1_Controls/main/ConferencePoster.jpg">
+ <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/BatmanofZuhandArrgh/StretchRE1_Controls/main/ConferencePoster.jpg">
+ <img alt="YOUR-ALT-TEXT" src="https://raw.githubusercontent.com/BatmanofZuhandArrgh/StretchRE1_Controls/main/ConferencePoster.jpg">
+</picture>
+
 # Memory
 Memory and Points of interest
 
@@ -25,3 +33,6 @@ pip install -r requirements.txt
 git submodule update --init
 pip install -r yolov7/requirements.txt
 '''
+
+
+
